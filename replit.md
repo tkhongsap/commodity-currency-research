@@ -121,6 +121,7 @@ Changelog:
 - June 18, 2025: Fixed frontend API routing issues for News and AI Insights features
 - June 18, 2025: Added timeout handling and fallback mechanisms for OpenAI service
 - June 18, 2025: Successfully deployed fully functional dashboard with all features working
+- June 18, 2025: Updated OpenAI model from gpt-4o to gpt-4o-mini per user request
 ```
 
 ## User Preferences

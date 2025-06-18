@@ -43,9 +43,9 @@ export class OpenAIService {
         setTimeout(() => reject(new Error('OpenAI API timeout')), 20000);
       });
       
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      // Using gpt-4o-mini as requested by the user
       const openaiPromise = this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",

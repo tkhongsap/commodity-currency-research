@@ -14,7 +14,7 @@ export function useNewsSearch() {
 
 export function useInstrumentNews(instrument: string) {
   return useQuery<NewsResponse>({
-    queryKey: ["/api/news", instrument],
+    queryKey: [`/api/news/${encodeURIComponent(instrument)}`],
     enabled: !!instrument,
   });
 }

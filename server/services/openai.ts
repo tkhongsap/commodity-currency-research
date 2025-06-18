@@ -38,8 +38,13 @@ export class OpenAIService {
         Make estimates realistic based on current market conditions. Focus on actionable insights.
       `;
       
+      // Create timeout promise to limit OpenAI API call duration
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('OpenAI API timeout')), 20000);
+      });
+      
       // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const response = await this.openai.chat.completions.create({
+      const openaiPromise = this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -55,6 +60,8 @@ export class OpenAIService {
         temperature: 0.7,
         max_tokens: 1500,
       });
+      
+      const response = await Promise.race([openaiPromise, timeoutPromise]);
       
       const result = JSON.parse(response.choices[0].message.content || '{}');
       

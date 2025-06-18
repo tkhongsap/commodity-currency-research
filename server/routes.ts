@@ -76,8 +76,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get AI insights
   app.get("/api/insights/:symbol", async (req, res) => {
+    const startTime = Date.now();
     try {
       const { symbol } = req.params;
+      console.log(`Generating insights for symbol: ${symbol}`);
       
       // First get current price data
       const priceData = await yahooFinanceService.getPrice(symbol);
@@ -85,19 +87,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Price data not found for insights generation" });
       }
       
+      console.log(`Price data retrieved for ${symbol}: ${priceData.price}`);
+      
+      // Set a response timeout of 25 seconds
+      const timeoutId = setTimeout(() => {
+        if (!res.headersSent) {
+          res.status(504).json({ 
+            error: "Request timeout",
+            message: "AI insights generation took too long. Please try again."
+          });
+        }
+      }, 25000);
+      
       const insights = await openaiService.generateInsights(
         symbol,
         priceData.name,
         priceData.price
       );
       
-      res.json(insights);
+      clearTimeout(timeoutId);
+      
+      if (!res.headersSent) {
+        const duration = Date.now() - startTime;
+        console.log(`Insights generated for ${symbol} in ${duration}ms`);
+        res.json(insights);
+      }
     } catch (error) {
-      console.error(`Error generating insights for ${req.params.symbol}:`, error);
-      res.status(500).json({ 
-        error: "Failed to generate AI insights",
-        message: error instanceof Error ? error.message : "Unknown error"
-      });
+      const duration = Date.now() - startTime;
+      console.error(`Error generating insights for ${req.params.symbol} after ${duration}ms:`, error);
+      
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: "Failed to generate AI insights",
+          message: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
     }
   });
 

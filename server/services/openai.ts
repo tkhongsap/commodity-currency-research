@@ -43,9 +43,9 @@ export class OpenAIService {
         setTimeout(() => reject(new Error('OpenAI API timeout')), 20000);
       });
       
-      // Using gpt-4o-mini as requested by the user
+      // Using gpt-4.1-mini as requested by the user
       const openaiPromise = this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini",
         messages: [
           {
             role: "system",

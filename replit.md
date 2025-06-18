@@ -117,7 +117,10 @@ This is a full-stack web application that tracks commodity and currency prices w
 
 ```
 Changelog:
-- June 18, 2025. Initial setup
+- June 18, 2025: Initial setup
+- June 18, 2025: Fixed frontend API routing issues for News and AI Insights features
+- June 18, 2025: Added timeout handling and fallback mechanisms for OpenAI service
+- June 18, 2025: Successfully deployed fully functional dashboard with all features working
 ```
 
 ## User Preferences

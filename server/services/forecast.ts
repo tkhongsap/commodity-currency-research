@@ -118,9 +118,9 @@ export class ForecastService {
     if (instrument.type === 'commodity') {
       return [
         {
-          query: `${baseInstrument} price forecast ${currentYear} 3 month target Goldman Sachs JPMorgan analyst consensus`,
+          query: `WTI crude oil price forecast September October November ${currentYear} Q3 Q4 short term 3 month target Goldman Sachs JPMorgan Bank America Morgan Stanley analyst price target`,
           horizon: '3M' as const,
-          expectedSources: ['Goldman Sachs', 'JPMorgan', 'Bank of America', 'Morgan Stanley']
+          expectedSources: ['Goldman Sachs', 'JPMorgan', 'Bank of America', 'Morgan Stanley', 'Citibank', 'Wells Fargo']
         },
         {
           query: `${baseInstrument} price outlook ${currentYear} 6 month forecast institutional research target`,
@@ -241,6 +241,10 @@ export class ForecastService {
       /(?:target|targets|forecast|forecasts|project|projects|expect|expects|see|sees|estimate|estimates)\s+(?:at\s+)?\$?([\d,]+\.?\d*)/gi,
       /(?:reach|reaching|hit|hitting|touch|touching)\s+\$?([\d,]+\.?\d*)/gi,
       /(?:around|near|about|approximately)\s+\$?([\d,]+\.?\d*)/gi,
+      
+      // Short-term and quarterly forecasts
+      /(?:Q3|Q4|third quarter|fourth quarter|near term|short term)\s+(?:forecast|target|outlook|price)\s+(?:of\s+)?\$?([\d,]+\.?\d*)/gi,
+      /(?:three month|3-month|90 day|quarterly)\s+(?:forecast|target|outlook|price)\s+(?:of\s+)?\$?([\d,]+\.?\d*)/gi,
       
       // Currency pair formats
       /[A-Z]{3}\/[A-Z]{3}\s+(?:at|to|near|around)\s+([\d,]+\.?\d*)/gi,
@@ -438,6 +442,8 @@ export class ForecastService {
         }
       }
     }
+    
+
     
     return validated;
   }

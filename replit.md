@@ -134,6 +134,8 @@ Changelog:
 - June 19, 2025: Implemented priority-based source selection to display the most credible institutions (Goldman Sachs, JPMorgan, etc.) with official website links
 - June 19, 2025: Fixed unrealistic currency forecasts by implementing specific validation ranges (THB: 25-45, MYR: 3.5-5.5, EUR: 0.8-1.4, GBP: 0.6-1.0)
 - June 19, 2025: Enhanced data integrity with symbol-specific validation to prevent impossible market predictions and ensure authentic forecast accuracy
+- June 19, 2025: Simplified forecast display design by removing individual institution names and showing compact confidence badges only
+- June 19, 2025: Streamlined UI to reduce space usage while maintaining confidence level information for user clarity
 ```
 
 ## User Preferences

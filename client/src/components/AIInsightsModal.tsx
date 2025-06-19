@@ -131,21 +131,11 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                       if (sourceInfo && sourceInfo.sources.length > 0) {
                         const source = sourceInfo.sources[0];
                         return (
-                          <div className="mt-2 space-y-1">
-                            <a 
-                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
-                            >
-                              {source.name}
-                            </a>
-                            <div className="flex justify-center">
-                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
-                                <Shield className="w-3 h-3 mr-1" />
-                                {source.confidence || 'medium'} confidence
-                              </Badge>
-                            </div>
+                          <div className="flex justify-center mt-2">
+                            <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                              <Shield className="w-3 h-3 mr-1" />
+                              {source.confidence || 'medium'}
+                            </Badge>
                           </div>
                         );
                       }
@@ -164,21 +154,11 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                       if (sourceInfo && sourceInfo.sources.length > 0) {
                         const source = sourceInfo.sources[0];
                         return (
-                          <div className="mt-2 space-y-1">
-                            <a 
-                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
-                            >
-                              {source.name}
-                            </a>
-                            <div className="flex justify-center">
-                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
-                                <Shield className="w-3 h-3 mr-1" />
-                                {source.confidence || 'medium'} confidence
-                              </Badge>
-                            </div>
+                          <div className="flex justify-center mt-2">
+                            <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                              <Shield className="w-3 h-3 mr-1" />
+                              {source.confidence || 'medium'}
+                            </Badge>
                           </div>
                         );
                       }
@@ -197,21 +177,11 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                       if (sourceInfo && sourceInfo.sources.length > 0) {
                         const source = sourceInfo.sources[0];
                         return (
-                          <div className="mt-2 space-y-1">
-                            <a 
-                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
-                            >
-                              {source.name}
-                            </a>
-                            <div className="flex justify-center">
-                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
-                                <Shield className="w-3 h-3 mr-1" />
-                                {source.confidence || 'medium'} confidence
-                              </Badge>
-                            </div>
+                          <div className="flex justify-center mt-2">
+                            <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                              <Shield className="w-3 h-3 mr-1" />
+                              {source.confidence || 'medium'}
+                            </Badge>
                           </div>
                         );
                       }
@@ -230,21 +200,11 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                       if (sourceInfo && sourceInfo.sources.length > 0) {
                         const source = sourceInfo.sources[0];
                         return (
-                          <div className="mt-2 space-y-1">
-                            <a 
-                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
-                            >
-                              {source.name}
-                            </a>
-                            <div className="flex justify-center">
-                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
-                                <Shield className="w-3 h-3 mr-1" />
-                                {source.confidence || 'medium'} confidence
-                              </Badge>
-                            </div>
+                          <div className="flex justify-center mt-2">
+                            <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                              <Shield className="w-3 h-3 mr-1" />
+                              {source.confidence || 'medium'}
+                            </Badge>
                           </div>
                         );
                       }
@@ -309,30 +269,12 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     </p>
                   </div>
                   
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
                     <h5 className="font-medium text-green-900 dark:text-green-200 mb-2">Confidence Levels</h5>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="default" className="text-xs">
-                          <Shield className="w-3 h-3 mr-1" />
-                          High Confidence
-                        </Badge>
-                        <span className="text-green-700 dark:text-green-300">Goldman Sachs, JPMorgan, Central Banks, Bloomberg</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          <Shield className="w-3 h-3 mr-1" />
-                          Medium Confidence
-                        </Badge>
-                        <span className="text-green-700 dark:text-green-300">Deutsche Bank, UBS, World Bank, Trading Economics</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          <Shield className="w-3 h-3 mr-1" />
-                          Low Confidence
-                        </Badge>
-                        <span className="text-green-700 dark:text-green-300">General market analysis, web search results</span>
-                      </div>
+                    <div className="text-xs text-green-700 dark:text-green-300 space-y-1">
+                      <div><strong>High:</strong> Goldman Sachs, JPMorgan, Central Banks, Bloomberg</div>
+                      <div><strong>Medium:</strong> Deutsche Bank, UBS, World Bank, Trading Economics</div>
+                      <div><strong>Low:</strong> General market analysis, web search results</div>
                     </div>
                   </div>
 

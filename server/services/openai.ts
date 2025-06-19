@@ -198,14 +198,20 @@ Include ALL articles. Prioritize Southeast Asia relevance.`;
       console.log(`[NEWS-TRIAGE] Sending ${newsForAnalysis.length} articles to OpenAI for ranking...`);
       const response = await Promise.race([openaiPromise, timeoutPromise]);
       console.log(`[NEWS-TRIAGE] OpenAI response received successfully`);
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const rawContent = response.choices[0].message.content || "{}";
+      console.log(`[NEWS-TRIAGE] Raw OpenAI response: ${rawContent.slice(0, 500)}...`);
+      const result = JSON.parse(rawContent);
 
       // Process AI rankings with enhanced hybrid scoring
       const rankedItems: RankedNewsItem[] = [];
       const scoringDebugInfo: string[] = [];
 
+      console.log(`[NEWS-TRIAGE] Processing AI rankings: ${result.rankings ? result.rankings.length : 0} items`);
+      
       if (result.rankings && Array.isArray(result.rankings)) {
+        console.log(`[NEWS-TRIAGE] AI rankings structure validated, processing ${result.rankings.length} rankings`);
         for (const ranking of result.rankings) {
+          console.log(`[NEWS-TRIAGE] Processing ranking: ID ${ranking.id}, Score ${ranking.riskScore}`);
           const originalItem = recentNewsItems[ranking.id];
           if (originalItem) {
             const baseAiScore = Math.min(Math.max(ranking.riskScore, 1), 10);
@@ -303,7 +309,20 @@ Include ALL articles. Prioritize Southeast Asia relevance.`;
   private calculateRecencyMultiplier(publishedAt: string): number {
     const now = new Date();
     const publishTime = new Date(publishedAt);
+    
+    // Check for invalid dates
+    if (isNaN(publishTime.getTime()) || isNaN(now.getTime())) {
+      console.warn(`[NEWS-TRIAGE] Invalid date format: ${publishedAt}, using default multiplier`);
+      return 1.0; // Default multiplier for invalid dates
+    }
+    
     const hoursAgo = (now.getTime() - publishTime.getTime()) / (1000 * 60 * 60);
+    
+    // Check for negative or unreasonable time differences
+    if (hoursAgo < 0 || hoursAgo > 8760) { // More than a year
+      console.warn(`[NEWS-TRIAGE] Unreasonable time difference: ${hoursAgo} hours, using default multiplier`);
+      return 1.0;
+    }
 
     if (hoursAgo < 2) return 1.5;    // Breaking news
     if (hoursAgo < 6) return 1.3;    // Very recent

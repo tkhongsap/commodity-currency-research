@@ -6,7 +6,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { AutoRefreshIndicator } from "@/components/AutoRefreshIndicator";
 import { useTheme } from "@/components/ThemeProvider";
 import { usePriceData } from "@/hooks/usePriceData";
-import { useNewsSearch, useInstrumentNews } from "@/hooks/useNews";
+import { useIntelligentNewsSearch, useInstrumentIntelligentNews } from "@/hooks/useNews";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
@@ -41,9 +41,9 @@ export default function Dashboard() {
   });
   
   // News and insights hooks
-  const newsSearchMutation = useNewsSearch();
+  const intelligentNewsSearchMutation = useIntelligentNewsSearch();
   const { data: instrumentNews, isLoading: instrumentNewsLoading, error: instrumentNewsError } = 
-    useInstrumentNews(newsModal.instrument || "");
+    useInstrumentIntelligentNews(newsModal.instrument || "");
   
   const { data: insights, isLoading: insightsLoading, error: insightsError } = 
     useAIInsights(insightsModal.symbol || "");
@@ -63,10 +63,10 @@ export default function Dashboard() {
 
   const handleGlobalSearch = async (query: string) => {
     try {
-      const result = await newsSearchMutation.mutateAsync(query);
+      const result = await intelligentNewsSearchMutation.mutateAsync(query);
       setNewsModal({
         isOpen: true,
-        title: `Search Results for "${query}"`,
+        title: `Top 5 Risk Impact News for "${query}"`,
         searchQuery: query,
       });
     } catch (error) {
@@ -225,11 +225,11 @@ export default function Dashboard() {
         isOpen={newsModal.isOpen}
         onClose={closeNewsModal}
         title={newsModal.title}
-        news={newsModal.searchQuery ? newsSearchMutation.data : instrumentNews}
-        isLoading={newsModal.searchQuery ? newsSearchMutation.isPending : instrumentNewsLoading}
+        news={newsModal.searchQuery ? intelligentNewsSearchMutation.data : instrumentNews}
+        isLoading={newsModal.searchQuery ? intelligentNewsSearchMutation.isPending : instrumentNewsLoading}
         error={
           newsModal.searchQuery 
-            ? (newsSearchMutation.error?.message || null)
+            ? (intelligentNewsSearchMutation.error?.message || null)
             : (instrumentNewsError instanceof Error ? instrumentNewsError.message : null)
         }
       />
@@ -238,7 +238,7 @@ export default function Dashboard() {
         isOpen={insightsModal.isOpen}
         onClose={closeInsightsModal}
         title={insightsModal.title}
-        insights={insights}
+        insights={insights || null}
         isLoading={insightsLoading}
         error={insightsError instanceof Error ? insightsError.message : null}
       />

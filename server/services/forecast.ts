@@ -230,31 +230,67 @@ export class ForecastService {
   }
 
   private extractForecastFromResult(searchResult: string, expectedSources: string[]): ForecastData {
-    // This is a simplified extraction - in production, you'd want more sophisticated parsing
     const now = new Date().toISOString();
     
-    // Look for numerical values in the result
-    const numberMatches = searchResult.match(/[\$€£¥]?[\d,]+\.?\d*/g);
-    const firstNumber = numberMatches?.[0];
+    console.log(`[FORECAST-DEBUG] Extracting forecast from result: ${searchResult.slice(0, 200)}...`);
     
-    if (firstNumber) {
-      // Extract numeric value
-      const numericValue = parseFloat(firstNumber.replace(/[^\d.]/g, ''));
+    // Enhanced pattern matching for various price formats
+    const patterns = [
+      /\$?([\d,]+\.?\d*)\s*\/?\s*(barrel|ton|pound|cents)/gi,  // $78.50/barrel, $2300/ton, 22.45 cents/pound
+      /(?:at|reach|target|forecasts?|projects?|reaching)\s+\$?([\d,]+\.?\d*)/gi,  // "forecasts $78.50", "reach 82.00", "reaching $85.50"
+      /USD\/[A-Z]{3}\s+(?:at|to|reach)\s+([\d,]+\.?\d*)/gi,  // USD/THB at 33.20
+      /([\d,]+\.?\d*)\s*(?:dollars?|USD)/gi,  // 78.50 dollars
+      /\$?([\d,]+\.?\d*)\s*(?:per|\/)/gi,  // $78.50 per, 78.50/
+      /(?:price|priced|prices)\s+(?:at|to|of)\s+\$?([\d,]+\.?\d*)/gi,  // "prices at $2300", "priced at 78.50"
+      /(?:suggest|expects?|could)\s+[^.\n]*?\$?([\d,]+\.?\d*)/gi,  // "could reach $88.00", "expects 35.10"
+      /([\d,]+\.?\d*)/g  // Any number as fallback
+    ];
+    
+    let numericValue: number | null = null;
+    let matchedPattern = '';
+    
+    for (const pattern of patterns) {
+      const matches = searchResult.match(pattern);
+      console.log(`[FORECAST-DEBUG] Pattern ${pattern} found matches:`, matches);
       
+      if (matches && matches.length > 0) {
+        // Try each match to find the first valid number
+        for (const match of matches) {
+          const numberMatch = match.match(/([\d,]+\.?\d*)/);
+          if (numberMatch) {
+            const rawValue = numberMatch[1].replace(/,/g, '');
+            const parsed = parseFloat(rawValue);
+            
+            if (!isNaN(parsed) && parsed > 0) {
+              numericValue = parsed;
+              matchedPattern = pattern.toString();
+              console.log(`[FORECAST-DEBUG] Successfully extracted value: ${numericValue} using pattern: ${matchedPattern} from match: "${match}"`);
+              break;
+            }
+          }
+        }
+        if (numericValue !== null) break;
+      }
+    }
+    
+    if (numericValue !== null) {
       // Determine confidence based on source quality
       const confidence = this.determineConfidence(searchResult, expectedSources);
       
       // Create source attribution
       const sources = this.extractSources(searchResult, expectedSources);
       
+      console.log(`[FORECAST-DEBUG] Created forecast data - Value: ${numericValue}, Sources: ${sources.length}, Confidence: ${confidence}`);
+      
       return {
         value: numericValue,
         sources,
-        methodology: `Web search of institutional research. Extracted from: ${sources.map(s => s.name).join(', ')}`,
+        methodology: `Web search of institutional research. Extracted from: ${sources.map(s => s.name).join(', ')} using pattern matching.`,
         lastUpdated: now
       };
     }
 
+    console.log(`[FORECAST-DEBUG] No numerical forecasts found in search results`);
     return this.createEmptyForecastData('No numerical forecasts found in search results');
   }
 

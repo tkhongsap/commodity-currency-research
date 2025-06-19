@@ -81,7 +81,7 @@ export default function Dashboard() {
   const handleViewNews = (instrument: string) => {
     setNewsModal({
       isOpen: true,
-      title: `${instrument} - Latest Research News (Global and Southeast Asia Impact)`,
+      title: `${instrument} - Top 5 Risk Impact News (Global and Southeast Asia)`,
       instrument,
     });
   };
@@ -225,7 +225,7 @@ export default function Dashboard() {
         isOpen={newsModal.isOpen}
         onClose={closeNewsModal}
         title={newsModal.title}
-        news={newsModal.searchQuery ? intelligentNewsSearchMutation.data : instrumentNews}
+        news={newsModal.searchQuery ? (intelligentNewsSearchMutation.data || null) : (instrumentNews || null)}
         isLoading={newsModal.searchQuery ? intelligentNewsSearchMutation.isPending : instrumentNewsLoading}
         error={
           newsModal.searchQuery 

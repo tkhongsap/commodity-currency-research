@@ -81,8 +81,7 @@ export class ForecastService {
     console.log(`[FORECAST] Collecting institutional forecasts for ${symbol} (${instrument.type})`);
 
     if (!this.webSearch) {
-      console.warn('[FORECAST] WebSearch not available, using market-based forecasts');
-      return this.createMarketBasedForecasts(symbol, instrument);
+      throw new Error('Web search is required for production forecasts. Please ensure OpenAI API key is configured.');
     }
 
     // Define search strategies based on instrument type
@@ -119,48 +118,49 @@ export class ForecastService {
     if (instrument.type === 'commodity') {
       return [
         {
-          query: `"${baseInstrument}" price forecast ${currentYear} "3 months" Goldman Sachs JPMorgan`,
+          query: `${baseInstrument} price forecast ${currentYear} 3 month target Goldman Sachs JPMorgan analyst consensus`,
           horizon: '3M' as const,
-          expectedSources: ['Goldman Sachs', 'JPMorgan', 'Bank of America']
+          expectedSources: ['Goldman Sachs', 'JPMorgan', 'Bank of America', 'Morgan Stanley']
         },
         {
-          query: `"${baseInstrument}" outlook "${currentYear}" "6 months" bank research`,
+          query: `${baseInstrument} price outlook ${currentYear} 6 month forecast institutional research target`,
           horizon: '6M' as const,
-          expectedSources: ['Investment banks', 'Commodity research']
+          expectedSources: ['Investment banks', 'Commodity research', 'Reuters', 'Bloomberg']
         },
         {
-          query: `"${baseInstrument}" price target "12 months" "${currentYear}" institutional`,
+          query: `${baseInstrument} price target 12 month ${currentYear} ${currentYear + 1} analyst forecast consensus`,
           horizon: '12M' as const,
-          expectedSources: ['IEA', 'World Bank', 'Trading Economics']
+          expectedSources: ['IEA', 'World Bank', 'Trading Economics', 'EIA', 'OPEC']
         },
         {
-          query: `"${baseInstrument}" long term forecast "${currentYear + 1}" "24 months"`,
+          query: `${baseInstrument} long term price forecast ${currentYear + 1} ${currentYear + 2} 24 month outlook`,
           horizon: '24M' as const,
-          expectedSources: ['Long-term research', 'Government agencies']
+          expectedSources: ['Long-term research', 'Government agencies', 'IMF', 'World Bank']
         }
       ];
     } else {
-      // Currency forecasts
+      // Currency forecasts - remove =X suffix for better search results
+      const currencyPair = symbol.replace('=X', '');
       return [
         {
-          query: `"${symbol.replace('=X', '')}" forecast "${currentYear}" "3 months" MUFG "central bank"`,
+          query: `${currencyPair} exchange rate forecast ${currentYear} 3 month target central bank research`,
           horizon: '3M' as const,
-          expectedSources: ['MUFG Research', 'Central banks']
+          expectedSources: ['MUFG Research', 'Central banks', 'Bank of Thailand', 'Federal Reserve']
         },
         {
-          query: `"${symbol.replace('=X', '')}" outlook "6 months" "${currentYear}" forex research`,
+          query: `${currencyPair} currency forecast ${currentYear} 6 month outlook forex research institutional`,
           horizon: '6M' as const,
-          expectedSources: ['Deutsche Bank', 'UBS', 'HSBC']
+          expectedSources: ['Deutsche Bank', 'UBS', 'HSBC', 'Citibank']
         },
         {
-          query: `"${symbol.replace('=X', '')}" "12 month" forecast "${currentYear}" consensus`,
+          query: `${currencyPair} currency target 12 month ${currentYear} ${currentYear + 1} consensus forecast`,
           horizon: '12M' as const,
-          expectedSources: ['Consensus Economics', 'Reuters polls']
+          expectedSources: ['Consensus Economics', 'Reuters polls', 'FX research']
         },
         {
-          query: `"${symbol.replace('=X', '')}" "24 month" "long term" forecast "${currentYear + 1}"`,
+          query: `${currencyPair} long term currency forecast ${currentYear + 1} ${currentYear + 2} 24 month outlook`,
           horizon: '24M' as const,
-          expectedSources: ['Long-term FX research']
+          expectedSources: ['Long-term FX research', 'Central bank projections']
         }
       ];
     }
@@ -234,16 +234,32 @@ export class ForecastService {
     
     console.log(`[FORECAST-DEBUG] Extracting forecast from result: ${searchResult.slice(0, 200)}...`);
     
-    // Enhanced pattern matching for various price formats
+    // Enhanced pattern matching for various price formats from real web search results
     const patterns = [
-      /\$?([\d,]+\.?\d*)\s*\/?\s*(barrel|ton|pound|cents)/gi,  // $78.50/barrel, $2300/ton, 22.45 cents/pound
-      /(?:at|reach|target|forecasts?|projects?|reaching)\s+\$?([\d,]+\.?\d*)/gi,  // "forecasts $78.50", "reach 82.00", "reaching $85.50"
-      /USD\/[A-Z]{3}\s+(?:at|to|reach)\s+([\d,]+\.?\d*)/gi,  // USD/THB at 33.20
-      /([\d,]+\.?\d*)\s*(?:dollars?|USD)/gi,  // 78.50 dollars
-      /\$?([\d,]+\.?\d*)\s*(?:per|\/)/gi,  // $78.50 per, 78.50/
-      /(?:price|priced|prices)\s+(?:at|to|of)\s+\$?([\d,]+\.?\d*)/gi,  // "prices at $2300", "priced at 78.50"
-      /(?:suggest|expects?|could)\s+[^.\n]*?\$?([\d,]+\.?\d*)/gi,  // "could reach $88.00", "expects 35.10"
-      /([\d,]+\.?\d*)/g  // Any number as fallback
+      // Commodity price formats
+      /\$?([\d,]+\.?\d*)\s*\/?\s*(barrel|ton|tonne|pound|cents|lb)/gi,
+      /(?:target|targets|forecast|forecasts|project|projects|expect|expects|see|sees|estimate|estimates)\s+(?:at\s+)?\$?([\d,]+\.?\d*)/gi,
+      /(?:reach|reaching|hit|hitting|touch|touching)\s+\$?([\d,]+\.?\d*)/gi,
+      /(?:around|near|about|approximately)\s+\$?([\d,]+\.?\d*)/gi,
+      
+      // Currency pair formats
+      /[A-Z]{3}\/[A-Z]{3}\s+(?:at|to|near|around)\s+([\d,]+\.?\d*)/gi,
+      /(?:exchange\s+rate|rate)\s+(?:of\s+)?([\d,]+\.?\d*)/gi,
+      
+      // Price level indicators
+      /(?:price|priced|pricing)\s+(?:at|of|around|near)\s+\$?([\d,]+\.?\d*)/gi,
+      /(?:level|levels)\s+(?:of|at|around|near)\s+\$?([\d,]+\.?\d*)/gi,
+      
+      // Analyst/institutional targets
+      /(?:consensus|average|mean)\s+(?:target|forecast|estimate)\s+(?:of\s+)?\$?([\d,]+\.?\d*)/gi,
+      /(?:analyst|analysts)\s+(?:expect|see|forecast|target)\s+\$?([\d,]+\.?\d*)/gi,
+      
+      // Generic price mentions with context
+      /([\d,]+\.?\d*)\s*(?:dollars?|USD|cents)/gi,
+      /\$\s*([\d,]+\.?\d*)/gi,
+      
+      // Last resort - any number in reasonable range
+      /([\d,]+\.?\d*)/g
     ];
     
     let numericValue: number | null = null;
@@ -404,19 +420,7 @@ export class ForecastService {
     console.log('[FORECAST] Cache cleared');
   }
 
-  private createMarketBasedForecasts(
-    symbol: string,
-    instrument: typeof this.INSTRUMENT_CATEGORIES[keyof typeof this.INSTRUMENT_CATEGORIES]
-  ): InstrumentForecasts {
-    return {
-      symbol,
-      threeMonths: this.createEmptyForecastData('No authentic institutional forecasts available for 3-month horizon'),
-      sixMonths: this.createEmptyForecastData('No authentic institutional forecasts available for 6-month horizon'),
-      twelveMonths: this.createEmptyForecastData('No authentic institutional forecasts available for 12-month horizon'),
-      twentyFourMonths: this.createEmptyForecastData('No authentic institutional forecasts available for 24-month horizon'),
-      forecastDisclaimer: "No authentic institutional forecasts available. External API access required for real forecasting data."
-    };
-  }
+
 
   private validateAndFixForecasts(
     forecasts: Partial<Record<keyof Omit<InstrumentForecasts, 'symbol' | 'forecastDisclaimer'>, ForecastData>>,

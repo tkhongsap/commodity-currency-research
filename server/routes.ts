@@ -1,132 +1,59 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import OpenAI from "openai";
 import { YahooFinanceService } from "./services/yahoo-finance";
 import { SerperService } from "./services/serper";
 import { OpenAIService } from "./services/openai";
 import { SearchRequestSchema } from "@shared/schema";
 
-// WebSearch function wrapper for the OpenAI service
-// Note: WebSearch should be available in the Claude Code environment
-declare const WebSearch: (params: { query: string; prompt: string }) => Promise<string>;
+// Production setup using OpenAI's web search capabilities
+// No mock data or external WebSearch dependencies required
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const yahooFinanceService = new YahooFinanceService();
   const serperService = new SerperService();
   
-  // Create WebSearch wrapper function with enhanced logging and realistic mock data
+  // Create OpenAI WebSearch wrapper for production use
   const webSearchWrapper = async (params: { query: string; prompt: string }): Promise<string> => {
-    console.log(`[FORECAST-DEBUG] WebSearch called with query: "${params.query}"`);
-    console.log(`[FORECAST-DEBUG] WebSearch prompt: "${params.prompt}"`);
-    console.log(`[FORECAST-DEBUG] WebSearch function available: ${typeof WebSearch !== 'undefined'}`);
-    console.log(`[FORECAST-DEBUG] Environment: NODE_ENV=${process.env.NODE_ENV}, Claude Code context: ${typeof global !== 'undefined' && global.process ? 'detected' : 'not detected'}`);
+    console.log(`[FORECAST-WEB-SEARCH] Executing web search with query: "${params.query}"`);
+    console.log(`[FORECAST-WEB-SEARCH] Search context: "${params.prompt}"`);
+    
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "";
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY is required for web search functionality");
+    }
+
+    const openai = new OpenAI({ apiKey });
     
     try {
-      if (typeof WebSearch !== 'undefined') {
-        console.log(`[FORECAST-DEBUG] Calling real WebSearch function...`);
-        const result = await WebSearch(params);
-        console.log(`[FORECAST-DEBUG] WebSearch result received, length: ${result?.length || 0}`);
-        console.log(`[FORECAST-DEBUG] WebSearch result preview: ${result?.slice(0, 200)}...`);
-        return result;
-      } else {
-        console.warn('[FORECAST-DEBUG] WebSearch not available - likely running outside Claude Code environment');
-        console.log('[FORECAST-DEBUG] Using enhanced mock data with realistic numerical values');
-        return generateRealisticMockForecast(params.query);
-      }
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-search-preview",
+        web_search_options: {},
+        messages: [
+          {
+            role: "system",
+            content: `You are a financial market research assistant. ${params.prompt}. Focus on finding specific numerical price forecasts, analyst targets, and institutional research. Always include source names and publication dates when available.`
+          },
+          {
+            role: "user",
+            content: params.query
+          }
+        ],
+        temperature: 0.1,
+        max_tokens: 1500
+      });
+
+      const result = completion.choices[0].message.content || "";
+      console.log(`[FORECAST-WEB-SEARCH] Search completed, result length: ${result.length}`);
+      console.log(`[FORECAST-WEB-SEARCH] Result preview: ${result.slice(0, 200)}...`);
+      
+      return result;
     } catch (error) {
-      console.error('[FORECAST-DEBUG] WebSearch error:', error);
-      if (error instanceof Error) {
-        console.error('[FORECAST-DEBUG] WebSearch error details:', error.message);
-        console.error('[FORECAST-DEBUG] WebSearch error stack:', error.stack?.slice(0, 300));
-      }
-      console.log('[FORECAST-DEBUG] Falling back to enhanced mock data due to error');
-      return generateRealisticMockForecast(params.query);
+      console.error('[FORECAST-WEB-SEARCH] OpenAI web search error:', error);
+      throw new Error(`Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
-  
-  // Generate realistic mock forecast data that can be parsed
-  function generateRealisticMockForecast(query: string): string {
-    console.log(`[FORECAST-DEBUG] Generating mock forecast for query: ${query}`);
-    
-    // Extract instrument type from query
-    const isCrudoOil = query.toLowerCase().includes('crude oil') || query.toLowerCase().includes('wti');
-    const isAluminum = query.toLowerCase().includes('aluminum');
-    const isSteel = query.toLowerCase().includes('steel') || query.toLowerCase().includes('hrc');
-    const isSugar = query.toLowerCase().includes('sugar');
-    const isUSDTHB = query.toLowerCase().includes('usdthb') || query.toLowerCase().includes('thai baht');
-    const isUSDMYR = query.toLowerCase().includes('usdmyr') || query.toLowerCase().includes('malaysian ringgit');
-    const isUSDEUR = query.toLowerCase().includes('usdeur') || query.toLowerCase().includes('euro');
-    const isUSDGBP = query.toLowerCase().includes('usdgbp') || query.toLowerCase().includes('british pound');
-    
-    // Extract timeframe from query
-    const isThreeMonth = query.includes('3 months') || query.includes('3M');
-    const isSixMonth = query.includes('6 months') || query.includes('6M');
-    const isTwelveMonth = query.includes('12 month') || query.includes('12M');
-    const isTwentyFourMonth = query.includes('24 month') || query.includes('24M');
-    
-    let mockResult = '';
-    
-    if (isCrudoOil) {
-      if (isThreeMonth) {
-        mockResult = `Goldman Sachs Research published their Q1 2025 commodities outlook, projecting WTI crude oil to reach $78.50/barrel over the next 3 months due to supply constraints and geopolitical tensions. The bank's energy team expects continued volatility but sees support around current levels.`;
-      } else if (isSixMonth) {
-        mockResult = `JPMorgan's energy research team forecasts WTI crude oil at $82.00/barrel for the 6-month horizon, citing OPEC+ production cuts and seasonal demand patterns. The investment bank sees upside potential from supply disruptions.`;
-      } else if (isTwelveMonth) {
-        mockResult = `IEA Oil Market Report projects WTI crude oil reaching $85.50/barrel over the next 12 months, supported by growing Asian demand and limited spare capacity. The agency expects tight market conditions to persist.`;
-      } else {
-        mockResult = `Long-term energy forecasts from institutional research suggest WTI crude oil could reach $88.00/barrel over the 24-month period, driven by global economic recovery and energy transition dynamics.`;
-      }
-    } else if (isAluminum) {
-      const basePrice = 2245;
-      const multiplier = isThreeMonth ? 1.03 : isSixMonth ? 1.06 : isTwelveMonth ? 1.10 : 1.15;
-      const forecastPrice = Math.round(basePrice * multiplier);
-      mockResult = `Trading Economics forecasts aluminum prices at $${forecastPrice}/ton based on supply chain recovery and infrastructure spending. Industrial demand remains strong globally.`;
-    } else if (isSteel) {
-      const basePrice = 685;
-      const multiplier = isThreeMonth ? 1.02 : isSixMonth ? 1.04 : isTwelveMonth ? 1.08 : 1.12;
-      const forecastPrice = Math.round(basePrice * multiplier);
-      mockResult = `World Bank commodity outlook projects steel HRC at $${forecastPrice}/ton, supported by construction demand and green infrastructure investments.`;
-    } else if (isSugar) {
-      const basePrice = 22.45;
-      const multiplier = isThreeMonth ? 1.04 : isSixMonth ? 1.08 : isTwelveMonth ? 1.12 : 1.18;
-      const forecastPrice = (basePrice * multiplier).toFixed(2);
-      mockResult = `IMF Primary Commodity Prices report forecasts sugar #11 at ${forecastPrice} cents/pound, driven by weather concerns and biofuel demand.`;
-    } else if (isUSDTHB) {
-      if (isThreeMonth) {
-        mockResult = `MUFG Research FX Outlook projects USD/THB at 33.20 over the next 3 months, expecting continued THB weakness due to widening yield spreads and capital outflows pressure.`;
-      } else if (isSixMonth) {
-        mockResult = `Bank of Thailand monetary policy suggests USD/THB could reach 34.15 in 6 months, as divergent central bank policies and regional economic factors support dollar strength.`;
-      } else if (isTwelveMonth) {
-        mockResult = `Consensus Economics Asia FX forecast shows USD/THB at 35.10 over 12 months, with THB expected to be among the worst performing Asian currencies in 2025.`;
-      } else {
-        mockResult = `Long-term FX research suggests USD/THB could reach 36.50 over 24 months, reflecting structural challenges in the Thai economy.`;
-      }
-    } else if (isUSDMYR) {
-      const baseRate = 4.42;
-      const multiplier = isThreeMonth ? 1.01 : isSixMonth ? 1.02 : isTwelveMonth ? 1.03 : 1.05;
-      const forecastRate = (baseRate * multiplier).toFixed(2);
-      mockResult = `Bank Negara Malaysia and CIMB Research project USD/MYR at ${forecastRate}, with MYR facing pressure from export dependencies and China exposure.`;
-    } else if (isUSDEUR) {
-      if (isThreeMonth) {
-        mockResult = `ECB Economic Bulletin suggests USD/EUR at 0.91 over 3 months, as EUR strength is expected from improved eurozone economic conditions.`;
-      } else if (isSixMonth) {
-        mockResult = `Deutsche Bank FX Research forecasts USD/EUR at 0.88 for the 6-month horizon, expecting continued EUR appreciation against the dollar.`;
-      } else if (isTwelveMonth) {
-        mockResult = `UBS Global FX Outlook projects USD/EUR at 0.86 over 12 months, with EUR/USD pair expected to reach 1.15-1.16 range.`;
-      } else {
-        mockResult = `Long-term currency forecasts suggest USD/EUR could reach 0.84 over 24 months, reflecting ECB policy normalization.`;
-      }
-    } else if (isUSDGBP) {
-      const baseRate = 0.79;
-      const multiplier = isThreeMonth ? 1.01 : isSixMonth ? 1.02 : isTwelveMonth ? 1.03 : 1.04;
-      const forecastRate = (baseRate * multiplier).toFixed(2);
-      mockResult = `FXStreet and OANDA analysis project USD/GBP at ${forecastRate}, with GBP showing moderate strength against the dollar.`;
-    } else {
-      mockResult = `Market analysis and institutional research suggest continued price volatility with moderate upward trend expected. Forecasts range from current levels to 5-10% higher over the projection period.`;
-    }
-    
-    console.log(`[FORECAST-DEBUG] Generated mock result: ${mockResult}`);
-    return mockResult;
-  }
+
   
   const openaiService = new OpenAIService(webSearchWrapper);
 
@@ -146,16 +73,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`[FORECAST-DEBUG] Admin debug request for symbol: ${symbol}`);
     
     try {
-      // Test WebSearch wrapper directly
+      // Test OpenAI web search wrapper directly
       const testQuery = `"Crude Oil WTI" price forecast 2025 "3 months" Goldman Sachs`;
-      console.log(`[FORECAST-DEBUG] Testing WebSearch with query: ${testQuery}`);
+      console.log(`[FORECAST-DEBUG] Testing OpenAI web search with query: ${testQuery}`);
       
       const webSearchResult = await webSearchWrapper({
         query: testQuery,
         prompt: "Extract numerical price forecasts for 3M timeframe."
       });
       
-      console.log(`[FORECAST-DEBUG] WebSearch test result: ${webSearchResult}`);
+      console.log(`[FORECAST-DEBUG] OpenAI web search test result: ${webSearchResult}`);
       
       // Get forecast stats
       const forecastService = (openaiService as any).forecastService;
@@ -165,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         debug: {
           symbol,
-          webSearchAvailable: typeof WebSearch !== 'undefined',
+          openaiWebSearchAvailable: true,
           webSearchTest: {
             query: testQuery,
             result: webSearchResult,
@@ -183,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error instanceof Error ? error.message : 'Unknown error',
         debug: {
           symbol,
-          webSearchAvailable: typeof WebSearch !== 'undefined',
+          openaiWebSearchAvailable: true,
           timestamp: new Date().toISOString()
         }
       });

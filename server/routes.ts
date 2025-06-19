@@ -30,6 +30,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const openaiService = new OpenAIService(webSearchWrapper);
 
+  // Admin endpoint to clear forecast cache
+  app.post("/api/admin/clear-cache", (req, res) => {
+    try {
+      openaiService.clearForecastCache();
+      res.json({ success: true, message: "Forecast cache cleared" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to clear cache" });
+    }
+  });
+
   // Get all price data
   app.get("/api/prices", async (req, res) => {
     try {

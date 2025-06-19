@@ -544,4 +544,9 @@ Include ALL articles. Prioritize Southeast Asia relevance.`;
       forecastDisclaimer: "No institutional forecasts available. Independent analysis not provided.",
     };
   }
+
+  // Method to clear forecast cache
+  clearForecastCache(): void {
+    this.forecastService.clearCache();
+  }
 }

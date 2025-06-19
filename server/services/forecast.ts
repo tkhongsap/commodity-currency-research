@@ -101,8 +101,8 @@ export class ForecastService {
     
     return {
       symbol,
-      threeMonths: validatedForecasts.threeMonths || this.createMarketBasedForecast(symbol, instrument, '3M'),
-      sixMonths: validatedForecasts.sixMonths || this.createMarketBasedForecast(symbol, instrument, '6M'),
+      threeMonths: validatedForecasts.threeMonths || this.createEmptyForecastData('No 3-month forecasts found'),
+      sixMonths: validatedForecasts.sixMonths || this.createEmptyForecastData('No 6-month forecasts found'),
       twelveMonths: validatedForecasts.twelveMonths || this.createEmptyForecastData('No 12-month forecasts found'),
       twentyFourMonths: validatedForecasts.twentyFourMonths || this.createEmptyForecastData('No 24-month forecasts found'),
       forecastDisclaimer: "Forecasts based on current market conditions and typical price movements. Past performance does not guarantee future results. Not investment advice."

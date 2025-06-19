@@ -133,7 +133,7 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                         return (
                           <div className="mt-2 space-y-1">
                             <a 
-                              href={source.url} 
+                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
@@ -166,7 +166,7 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                         return (
                           <div className="mt-2 space-y-1">
                             <a 
-                              href={source.url} 
+                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
@@ -199,7 +199,7 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                         return (
                           <div className="mt-2 space-y-1">
                             <a 
-                              href={source.url} 
+                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
@@ -227,20 +227,24 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     </div>
                     {(() => {
                       const sourceInfo = getForecastSources(insights.priceEstimates.twentyFourMonths);
-                      if (sourceInfo) {
+                      if (sourceInfo && sourceInfo.sources.length > 0) {
+                        const source = sourceInfo.sources[0];
                         return (
                           <div className="mt-2 space-y-1">
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              {sourceInfo.display}
+                            <a 
+                              href={source.url || `https://www.google.com/search?q=${encodeURIComponent(source.name + ' forecast')}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
+                            >
+                              {source.name}
+                            </a>
+                            <div className="flex justify-center">
+                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                                <Shield className="w-3 h-3 mr-1" />
+                                {source.confidence || 'medium'} confidence
+                              </Badge>
                             </div>
-                            {sourceInfo.sources.length > 0 && (
-                              <div className="flex justify-center">
-                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
-                                  <Shield className="w-3 h-3 mr-1" />
-                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </Badge>
-                              </div>
-                            )}
                           </div>
                         );
                       }

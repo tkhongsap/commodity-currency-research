@@ -5,10 +5,30 @@ import { SerperService } from "./services/serper";
 import { OpenAIService } from "./services/openai";
 import { SearchRequestSchema } from "@shared/schema";
 
+// WebSearch function wrapper for the OpenAI service
+// Note: WebSearch should be available in the Claude Code environment
+declare const WebSearch: (params: { query: string; prompt: string }) => Promise<string>;
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const yahooFinanceService = new YahooFinanceService();
   const serperService = new SerperService();
-  const openaiService = new OpenAIService();
+  
+  // Create WebSearch wrapper function for OpenAI service
+  const webSearchWrapper = async (params: { query: string; prompt: string }): Promise<string> => {
+    try {
+      if (typeof WebSearch !== 'undefined') {
+        return await WebSearch(params);
+      } else {
+        console.warn('[FORECAST] WebSearch not available in this environment');
+        return `Mock search result for: ${params.query}`;
+      }
+    } catch (error) {
+      console.error('[FORECAST] WebSearch error:', error);
+      throw error;
+    }
+  };
+  
+  const openaiService = new OpenAIService(webSearchWrapper);
 
   // Get all price data
   app.get("/api/prices", async (req, res) => {
@@ -184,15 +204,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Price data retrieved for ${symbol}: ${priceData.price}`);
       
-      // Set a response timeout of 25 seconds
+      // Set a response timeout of 40 seconds to accommodate forecast collection
       const timeoutId = setTimeout(() => {
         if (!res.headersSent) {
           res.status(504).json({ 
             error: "Request timeout",
-            message: "AI insights generation took too long. Please try again."
+            message: "AI insights with forecast generation took too long. Please try again."
           });
         }
-      }, 25000);
+      }, 40000);
       
       const insights = await openaiService.generateInsights(
         symbol,

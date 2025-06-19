@@ -12,6 +12,36 @@ interface AIInsightsModalProps {
   error: string | null;
 }
 
+// Helper functions to handle both old number format and new ForecastData format
+function getForecastDisplay(forecast: number | { value: number | null; [key: string]: any }): string {
+  if (typeof forecast === 'number') {
+    return forecast.toFixed(2);
+  }
+  
+  if (forecast && typeof forecast === 'object' && 'value' in forecast) {
+    return forecast.value !== null ? forecast.value.toFixed(2) : 'N/A';
+  }
+  
+  return 'N/A';
+}
+
+function getForecastSources(forecast: number | { value: number | null; sources?: Array<{name: string; confidence: string}>; [key: string]: any }): string | null {
+  if (typeof forecast === 'number') {
+    return null; // Old format has no sources
+  }
+  
+  if (forecast && typeof forecast === 'object' && 'sources' in forecast && forecast.sources) {
+    const sources = forecast.sources;
+    if (sources.length > 0) {
+      const sourceNames = sources.slice(0, 2).map((s: any) => s.name).join(', ');
+      const moreCount = sources.length > 2 ? ` +${sources.length - 2} more` : '';
+      return sourceNames + moreCount;
+    }
+  }
+  
+  return null;
+}
+
 export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, error }: AIInsightsModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -61,29 +91,56 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                   Price Estimates
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* 3 Months */}
                   <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">3 months</div>
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                      {insights.priceEstimates.threeMonths.toFixed(2)}
+                      {getForecastDisplay(insights.priceEstimates.threeMonths)}
                     </div>
+                    {getForecastSources(insights.priceEstimates.threeMonths) && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {getForecastSources(insights.priceEstimates.threeMonths)}
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* 6 Months */}
                   <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">6 months</div>
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                      {insights.priceEstimates.sixMonths.toFixed(2)}
+                      {getForecastDisplay(insights.priceEstimates.sixMonths)}
                     </div>
+                    {getForecastSources(insights.priceEstimates.sixMonths) && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {getForecastSources(insights.priceEstimates.sixMonths)}
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* 12 Months */}
                   <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">12 months</div>
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                      {insights.priceEstimates.twelveMonths.toFixed(2)}
+                      {getForecastDisplay(insights.priceEstimates.twelveMonths)}
                     </div>
+                    {getForecastSources(insights.priceEstimates.twelveMonths) && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {getForecastSources(insights.priceEstimates.twelveMonths)}
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* 24 Months */}
                   <div className="text-center p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">24 months</div>
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                      {insights.priceEstimates.twentyFourMonths.toFixed(2)}
+                      {getForecastDisplay(insights.priceEstimates.twentyFourMonths)}
                     </div>
+                    {getForecastSources(insights.priceEstimates.twentyFourMonths) && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {getForecastSources(insights.priceEstimates.twentyFourMonths)}
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -127,6 +184,23 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                   {insights.futureOutlook}
                 </p>
               </section>
+
+              {/* Forecast Disclaimer Section */}
+              {insights.forecastDisclaimer && (
+                <section className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h5 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
+                        Forecast Transparency
+                      </h5>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                        {insights.forecastDisclaimer}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
             </>
           )}
         </div>

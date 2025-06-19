@@ -4,18 +4,22 @@ import {
   NewsItem,
   RankedNewsItem,
   NewsRankingResponse,
+  ForecastData,
 } from "@shared/schema";
+import { ForecastService } from "./forecast";
 
 export class OpenAIService {
   private openai: OpenAI;
+  private forecastService: ForecastService;
 
-  constructor() {
+  constructor(webSearchFunction?: (params: { query: string; prompt: string }) => Promise<string>) {
     const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "";
     if (!apiKey) {
       throw new Error("OPENAI_API_KEY is required");
     }
 
     this.openai = new OpenAI({ apiKey });
+    this.forecastService = new ForecastService(webSearchFunction);
   }
 
   async generateInsights(
@@ -24,27 +28,35 @@ export class OpenAIService {
     currentPrice: number,
   ): Promise<AIInsights> {
     try {
+      console.log(`[AI-INSIGHTS] Starting enhanced insights generation for ${symbol}`);
+      
+      // First, collect institutional forecasts
+      const forecasts = await this.forecastService.getForecastsForInstrument(symbol);
+      console.log(`[AI-INSIGHTS] Forecasts collected for ${symbol}`);
+      
+      // Build enhanced prompt with forecast context
+      const forecastContext = this.buildForecastContext(forecasts);
+      
       const prompt = `
         Analyze ${instrumentName} (${symbol}) with current price ${currentPrice}. 
+        
+        ${forecastContext}
+        
         Provide comprehensive market analysis focusing on Southeast Asia and Thailand impact.
+        Consider the institutional forecasts above when making your analysis.
         
         Respond with JSON in this exact format:
         {
           "symbol": "${symbol}",
-          "marketOverview": "Brief overview of current market conditions",
-          "priceEstimates": {
-            "threeMonths": number,
-            "sixMonths": number,
-            "twelveMonths": number,
-            "twentyFourMonths": number
-          },
+          "marketOverview": "Brief overview of current market conditions, referencing available forecasts",
+          "priceEstimates": "DO_NOT_INCLUDE_THIS_FIELD",
           "macroAnalysis": "Analysis of macro economic factors",
           "regionalImpact": "Impact on Southeast Asian economies",
           "thailandImpact": "Specific impact on Thailand",
-          "futureOutlook": "Future market outlook"
+          "futureOutlook": "Future market outlook based on institutional forecasts and analysis"
         }
         
-        Make estimates realistic based on current market conditions. Focus on actionable insights.
+        IMPORTANT: Do not include priceEstimates in your response as they will be handled separately.
       `;
 
       // Create timeout promise to limit OpenAI API call duration
@@ -75,21 +87,15 @@ export class OpenAIService {
 
       const result = JSON.parse(response.choices[0].message.content || "{}");
 
-      // Validate and format the response
+      // Combine AI analysis with institutional forecasts
       return {
         symbol: result.symbol || symbol,
         marketOverview: result.marketOverview || "Market analysis unavailable",
         priceEstimates: {
-          threeMonths: Number(
-            result.priceEstimates?.threeMonths || currentPrice,
-          ),
-          sixMonths: Number(result.priceEstimates?.sixMonths || currentPrice),
-          twelveMonths: Number(
-            result.priceEstimates?.twelveMonths || currentPrice,
-          ),
-          twentyFourMonths: Number(
-            result.priceEstimates?.twentyFourMonths || currentPrice,
-          ),
+          threeMonths: forecasts.threeMonths,
+          sixMonths: forecasts.sixMonths,
+          twelveMonths: forecasts.twelveMonths,
+          twentyFourMonths: forecasts.twentyFourMonths,
         },
         macroAnalysis: result.macroAnalysis || "Macro analysis unavailable",
         regionalImpact:
@@ -97,19 +103,29 @@ export class OpenAIService {
         thailandImpact:
           result.thailandImpact || "Thailand impact analysis unavailable",
         futureOutlook: result.futureOutlook || "Future outlook unavailable",
+        forecastDisclaimer: forecasts.forecastDisclaimer,
       };
     } catch (error) {
       console.error("Error generating AI insights:", error);
 
-      // Return a fallback response with current price estimates if OpenAI fails
+      // Try to get forecasts even if AI analysis fails
+      let fallbackForecasts;
+      try {
+        fallbackForecasts = await this.forecastService.getForecastsForInstrument(symbol);
+      } catch (forecastError) {
+        console.error("Error getting fallback forecasts:", forecastError);
+        fallbackForecasts = this.createEmptyForecasts(symbol);
+      }
+
+      // Return a fallback response with institutional forecasts (if available)
       return {
         symbol,
         marketOverview: `Current market analysis for ${instrumentName} is temporarily unavailable. The instrument is trading at ${currentPrice}.`,
         priceEstimates: {
-          threeMonths: currentPrice * 1.02,
-          sixMonths: currentPrice * 1.05,
-          twelveMonths: currentPrice * 1.08,
-          twentyFourMonths: currentPrice * 1.12,
+          threeMonths: fallbackForecasts.threeMonths,
+          sixMonths: fallbackForecasts.sixMonths,
+          twelveMonths: fallbackForecasts.twelveMonths,
+          twentyFourMonths: fallbackForecasts.twentyFourMonths,
         },
         macroAnalysis:
           "Detailed macro analysis is temporarily unavailable. Please try again later.",
@@ -119,6 +135,7 @@ export class OpenAIService {
           "Thailand-specific impact analysis is temporarily unavailable.",
         futureOutlook:
           "Future outlook analysis is temporarily unavailable. Please try again later.",
+        forecastDisclaimer: fallbackForecasts.forecastDisclaimer,
       };
     }
   }
@@ -466,6 +483,65 @@ Include ALL articles. Prioritize Southeast Asia relevance.`;
         keywords: Math.round((factorStats.keywords / factorStats.count) * 100) / 100,
         geo: Math.round((factorStats.geo / factorStats.count) * 100) / 100
       }
+    };
+  }
+
+  // Helper method to build forecast context for AI prompt
+  private buildForecastContext(forecasts: any): string {
+    const forecastLines: string[] = [
+      "\n=== INSTITUTIONAL FORECASTS AVAILABLE ===",
+    ];
+
+    // Check each timeframe and add to context if available
+    if (forecasts.threeMonths.value !== null) {
+      const sources = forecasts.threeMonths.sources.map((s: any) => s.name).join(", ");
+      forecastLines.push(`3-Month Forecast: ${forecasts.threeMonths.value} (Sources: ${sources})`);
+    } else {
+      forecastLines.push("3-Month Forecast: Not available");
+    }
+
+    if (forecasts.sixMonths.value !== null) {
+      const sources = forecasts.sixMonths.sources.map((s: any) => s.name).join(", ");
+      forecastLines.push(`6-Month Forecast: ${forecasts.sixMonths.value} (Sources: ${sources})`);
+    } else {
+      forecastLines.push("6-Month Forecast: Not available");
+    }
+
+    if (forecasts.twelveMonths.value !== null) {
+      const sources = forecasts.twelveMonths.sources.map((s: any) => s.name).join(", ");
+      forecastLines.push(`12-Month Forecast: ${forecasts.twelveMonths.value} (Sources: ${sources})`);
+    } else {
+      forecastLines.push("12-Month Forecast: Not available");
+    }
+
+    if (forecasts.twentyFourMonths.value !== null) {
+      const sources = forecasts.twentyFourMonths.sources.map((s: any) => s.name).join(", ");
+      forecastLines.push(`24-Month Forecast: ${forecasts.twentyFourMonths.value} (Sources: ${sources})`);
+    } else {
+      forecastLines.push("24-Month Forecast: Not available");
+    }
+
+    forecastLines.push("=== END FORECASTS ===\n");
+
+    return forecastLines.join("\n");
+  }
+
+  // Helper method to create empty forecasts for fallback
+  private createEmptyForecasts(symbol: string) {
+    const emptyForecast: ForecastData = {
+      value: null,
+      sources: [],
+      methodology: "Forecast unavailable",
+      lastUpdated: new Date().toISOString(),
+    };
+
+    return {
+      symbol,
+      threeMonths: emptyForecast,
+      sixMonths: emptyForecast,
+      twelveMonths: emptyForecast,
+      twentyFourMonths: emptyForecast,
+      forecastDisclaimer: "No institutional forecasts available. Independent analysis not provided.",
     };
   }
 }

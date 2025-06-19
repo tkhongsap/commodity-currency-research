@@ -85,7 +85,7 @@ export class YahooFinanceService {
         change: Number(change.toFixed(2)),
         changePercent: Number(changePercent.toFixed(2)),
         unit: mapping.unit,
-        pair: mapping.pair,
+        pair: 'pair' in mapping ? mapping.pair : undefined,
         lastUpdated: new Date().toLocaleString('en-US', {
           month: 'numeric',
           day: 'numeric',

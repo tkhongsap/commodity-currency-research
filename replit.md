@@ -122,6 +122,7 @@ Changelog:
 - June 18, 2025: Added timeout handling and fallback mechanisms for OpenAI service
 - June 18, 2025: Successfully deployed fully functional dashboard with all features working
 - June 18, 2025: Updated OpenAI model from gpt-4o to gpt-4o-mini per user request
+- June 19, 2025: Enhanced Serper news integration with AI-powered risk scoring and multi-region collection
 ```
 
 ## User Preferences

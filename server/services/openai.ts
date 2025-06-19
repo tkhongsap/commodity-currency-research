@@ -128,6 +128,21 @@ export class OpenAIService {
     instrumentContext?: string,
   ): Promise<NewsRankingResponse> {
     try {
+      // Test OpenAI connection first
+      console.log(`[NEWS-TRIAGE] Testing OpenAI connection...`);
+      if (!process.env.OPENAI_API_KEY) {
+        throw new Error("OPENAI_API_KEY not found in environment variables");
+      }
+      console.log(`[NEWS-TRIAGE] OpenAI API key found, length: ${process.env.OPENAI_API_KEY.length}`);
+      
+      // Quick connection test
+      try {
+        await this.openai.models.list();
+        console.log(`[NEWS-TRIAGE] OpenAI connection test successful`);
+      } catch (testError) {
+        console.error(`[NEWS-TRIAGE] OpenAI connection test failed:`, testError);
+        throw new Error(`OpenAI connection failed: ${testError instanceof Error ? testError.message : 'Unknown error'}`);
+      }
       // Prepare news items for AI analysis
       const newsForAnalysis = newsItems.map((item, index) => ({
         id: index,
@@ -186,9 +201,9 @@ export class OpenAIService {
         setTimeout(() => reject(new Error("AI ranking timeout")), 20000);
       });
 
-      // Using GPT-4o-mini for cost-effective news ranking
+      // Using GPT-4.1-mini for cost-effective news ranking
       const openaiPromise = this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini",
         messages: [
           {
             role: "system",
@@ -205,7 +220,9 @@ export class OpenAIService {
         max_tokens: 1200,
       });
 
+      console.log(`[NEWS-TRIAGE] Sending ${newsItems.length} articles to OpenAI for ranking...`);
       const response = await Promise.race([openaiPromise, timeoutPromise]);
+      console.log(`[NEWS-TRIAGE] OpenAI response received successfully`);
       const result = JSON.parse(response.choices[0].message.content || "{}");
 
       // Process AI rankings with enhanced hybrid scoring
@@ -267,6 +284,10 @@ export class OpenAIService {
       };
     } catch (error) {
       console.error("Error ranking news by impact:", error);
+      if (error instanceof Error) {
+        console.error(`[NEWS-TRIAGE] Error details: ${error.message}`);
+        console.error(`[NEWS-TRIAGE] Error stack: ${error.stack}`);
+      }
       return this.fallbackToChronological(newsItems);
     }
   }

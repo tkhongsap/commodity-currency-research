@@ -221,12 +221,24 @@ export class SerperService {
   // Build general impact query for search terms
   public buildGeneralImpactQuery(searchTerm: string): string {
     // If it looks like an instrument/commodity name, use quoted search
-    const isInstrumentName = /^[A-Z]{2,6}[=\-\.]?[FX]?$/i.test(searchTerm.trim()) || 
-                             ['gold', 'silver', 'oil', 'copper', 'aluminum', 'sugar', 'coffee', 'wheat', 'corn', 'bitcoin', 'ethereum'].some(commodity => 
-                               searchTerm.toLowerCase().includes(commodity));
-    
+    const isInstrumentName =
+      /^[A-Z]{2,6}[=\-\.]?[FX]?$/i.test(searchTerm.trim()) ||
+      [
+        "gold",
+        "silver",
+        "oil",
+        "copper",
+        "aluminum",
+        "sugar",
+        "coffee",
+        "wheat",
+        "corn",
+        "bitcoin",
+        "ethereum",
+      ].some((commodity) => searchTerm.toLowerCase().includes(commodity));
+
     const queryTerm = isInstrumentName ? `"${searchTerm}"` : searchTerm;
-    
+
     return `${queryTerm} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain)`;
   }
 
@@ -286,9 +298,12 @@ export class SerperService {
   }
 
   // Build optimized search query for high-impact news
-  private buildImpactQuery(instrumentName: string, queryType: 'primary' | 'policy' | 'market' | 'regional' = 'primary'): string {
+  private buildImpactQuery(
+    instrumentName: string,
+    queryType: "primary" | "policy" | "market" | "regional" = "primary",
+  ): string {
     const quotedInstrument = `"${instrumentName}"`;
-    
+
     // Use simplified keyword list for all query types
     return `${quotedInstrument} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain)`;
   }
@@ -303,29 +318,38 @@ export class SerperService {
     instrumentName: string,
   ): Promise<NewsRankingResponse> {
     // Use optimized high-impact query for intelligent ranking
-    const primaryQuery = this.buildImpactQuery(instrumentName, 'primary');
-    
+    const primaryQuery = this.buildImpactQuery(instrumentName, "primary");
+
     try {
-      console.log(`[NEWS-TRIAGE] Using optimized query for ${instrumentName}: "${primaryQuery}"`);
-      
+      console.log(
+        `[NEWS-TRIAGE] Using optimized query for ${instrumentName}: "${primaryQuery}"`,
+      );
+
       // Try primary high-impact query first
       const result = await this.triageAndRankNews(primaryQuery, instrumentName);
-      
+
       // If we get fewer than 3 results, try fallback queries
       if (result.items.length < 3) {
-        console.log(`[NEWS-TRIAGE] Primary query returned ${result.items.length} items, trying fallback queries`);
-        
+        console.log(
+          `[NEWS-TRIAGE] Primary query returned ${result.items.length} items, trying fallback queries`,
+        );
+
         const fallbackQueries = [
-          this.buildImpactQuery(instrumentName, 'policy'),
-          this.buildImpactQuery(instrumentName, 'market'),
-          this.buildImpactQuery(instrumentName, 'regional')
+          this.buildImpactQuery(instrumentName, "policy"),
+          this.buildImpactQuery(instrumentName, "market"),
+          this.buildImpactQuery(instrumentName, "regional"),
         ];
-        
+
         for (const fallbackQuery of fallbackQueries) {
           try {
-            const fallbackResult = await this.triageAndRankNews(fallbackQuery, instrumentName);
+            const fallbackResult = await this.triageAndRankNews(
+              fallbackQuery,
+              instrumentName,
+            );
             if (fallbackResult.items.length >= 3) {
-              console.log(`[NEWS-TRIAGE] Fallback query successful with ${fallbackResult.items.length} items`);
+              console.log(
+                `[NEWS-TRIAGE] Fallback query successful with ${fallbackResult.items.length} items`,
+              );
               return fallbackResult;
             }
           } catch (error) {
@@ -334,12 +358,14 @@ export class SerperService {
           }
         }
       }
-      
+
       return result;
-      
     } catch (error) {
-      console.error(`[NEWS-TRIAGE] Optimized query failed, falling back to basic query:`, error);
-      
+      console.error(
+        `[NEWS-TRIAGE] Optimized query failed, falling back to basic query:`,
+        error,
+      );
+
       // Final fallback to basic query
       const basicQuery = `${instrumentName} commodity currency market news Southeast Asia Thailand`;
       return this.triageAndRankNews(basicQuery, instrumentName);

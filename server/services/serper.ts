@@ -314,15 +314,35 @@ export class SerperService {
     return this.collectGlobalNews(searchQuery);
   }
 
+  // Map display names to optimal search terms for news
+  private getOptimalSearchTerm(instrumentName: string): string {
+    const searchTermMappings: Record<string, string> = {
+      // Commodities - use simpler, more searchable terms
+      'Crude Oil (WTI)': 'crude oil',
+      'Steel (HRC)': 'steel prices',
+      'Sugar #11': 'sugar commodity',
+      'Aluminum': 'aluminum',
+      
+      // Currencies - use common market terms
+      'Thai Baht': 'Thai baht THB',
+      'Malaysian Ringgit': 'Malaysian ringgit MYR', 
+      'Euro': 'euro EUR',
+      'British Pound': 'British pound GBP'
+    };
+    
+    return searchTermMappings[instrumentName] || instrumentName;
+  }
+
   async getInstrumentNewsWithRanking(
     instrumentName: string,
   ): Promise<NewsRankingResponse> {
-    // Use optimized high-impact query for intelligent ranking
-    const primaryQuery = this.buildImpactQuery(instrumentName, "primary");
+    // Use optimized search term and high-impact query for intelligent ranking
+    const optimizedSearchTerm = this.getOptimalSearchTerm(instrumentName);
+    const primaryQuery = this.buildImpactQuery(optimizedSearchTerm, "primary");
 
     try {
       console.log(
-        `[NEWS-TRIAGE] Using optimized query for ${instrumentName}: "${primaryQuery}"`,
+        `[NEWS-TRIAGE] Using optimized query for ${instrumentName} (search term: "${optimizedSearchTerm}"): "${primaryQuery}"`,
       );
 
       // Try primary high-impact query first
@@ -335,9 +355,9 @@ export class SerperService {
         );
 
         const fallbackQueries = [
-          this.buildImpactQuery(instrumentName, "policy"),
-          this.buildImpactQuery(instrumentName, "market"),
-          this.buildImpactQuery(instrumentName, "regional"),
+          this.buildImpactQuery(optimizedSearchTerm, "policy"),
+          this.buildImpactQuery(optimizedSearchTerm, "market"),
+          this.buildImpactQuery(optimizedSearchTerm, "regional"),
         ];
 
         for (const fallbackQuery of fallbackQueries) {
@@ -366,8 +386,8 @@ export class SerperService {
         error,
       );
 
-      // Final fallback to basic query
-      const basicQuery = `${instrumentName} commodity currency market news Southeast Asia Thailand`;
+      // Final fallback to basic query using optimized search term
+      const basicQuery = `${optimizedSearchTerm} commodity currency market news Southeast Asia Thailand`;
       return this.triageAndRankNews(basicQuery, instrumentName);
     }
   }

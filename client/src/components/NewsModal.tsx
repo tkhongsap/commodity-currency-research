@@ -26,8 +26,17 @@ function isRankedItem(item: any): item is RankedNewsItem {
 
 export function NewsModal({ isOpen, onClose, title, news, isLoading, error }: NewsModalProps) {
   const formatTimeAgo = (dateString: string) => {
+    // Handle already relative dates from the API
+    if (dateString.includes('ago') || dateString.includes('hour') || dateString.includes('day') || dateString.includes('minute')) {
+      return dateString;
+    }
+    
     try {
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Recently";
+      }
+      
       const now = new Date();
       const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
       

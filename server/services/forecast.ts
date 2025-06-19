@@ -118,22 +118,22 @@ export class ForecastService {
     if (instrument.type === 'commodity') {
       return [
         {
-          query: `WTI crude oil price forecast September October November ${currentYear} Q3 Q4 short term 3 month target Goldman Sachs JPMorgan Bank America Morgan Stanley analyst price target`,
+          query: `WTI crude oil price forecast ${currentYear} Q3 Q4 September October November three month target Goldman Sachs JPMorgan Morgan Stanley Citibank analyst price forecast near term outlook`,
           horizon: '3M' as const,
           expectedSources: ['Goldman Sachs', 'JPMorgan', 'Bank of America', 'Morgan Stanley', 'Citibank', 'Wells Fargo']
         },
         {
-          query: `${baseInstrument} price outlook ${currentYear} 6 month forecast institutional research target`,
+          query: `WTI crude oil 6 month price forecast ${currentYear} ${currentYear + 1} first half next year institutional research Reuters Bloomberg IEA EIA analyst target`,
           horizon: '6M' as const,
-          expectedSources: ['Investment banks', 'Commodity research', 'Reuters', 'Bloomberg']
+          expectedSources: ['Investment banks', 'Commodity research', 'Reuters', 'Bloomberg', 'IEA', 'EIA']
         },
         {
-          query: `${baseInstrument} price target 12 month ${currentYear} ${currentYear + 1} analyst forecast consensus`,
+          query: `WTI crude oil 12 month price forecast ${currentYear + 1} annual outlook analyst consensus EIA IEA OPEC World Bank energy price target one year`,
           horizon: '12M' as const,
           expectedSources: ['IEA', 'World Bank', 'Trading Economics', 'EIA', 'OPEC']
         },
         {
-          query: `${baseInstrument} long term price forecast ${currentYear + 1} ${currentYear + 2} 24 month outlook`,
+          query: `WTI crude oil long term price forecast ${currentYear + 1} ${currentYear + 2} 24 month two year outlook IMF World Bank energy transition analyst research`,
           horizon: '24M' as const,
           expectedSources: ['Long-term research', 'Government agencies', 'IMF', 'World Bank']
         }
@@ -236,15 +236,22 @@ export class ForecastService {
     
     // Enhanced pattern matching for various price formats from real web search results
     const patterns = [
-      // Commodity price formats
-      /\$?([\d,]+\.?\d*)\s*\/?\s*(barrel|ton|tonne|pound|cents|lb)/gi,
-      /(?:target|targets|forecast|forecasts|project|projects|expect|expects|see|sees|estimate|estimates)\s+(?:at\s+)?\$?([\d,]+\.?\d*)/gi,
+      // Specific institutional forecast patterns
+      /(?:Goldman Sachs|JPMorgan|Morgan Stanley|Bank of America|Citibank|Wells Fargo)\s+(?:forecasts?|projects?|expects?|targets?|sees?)\s+(?:WTI|crude oil|oil)\s+(?:at|to|around|near)?\s*\$?([\d,]+\.?\d*)/gi,
+      /(?:IEA|EIA|OPEC|IMF|World Bank|Reuters|Bloomberg)\s+(?:forecasts?|projects?|expects?|targets?|sees?)\s+(?:WTI|crude oil|oil)\s+(?:at|to|around|near)?\s*\$?([\d,]+\.?\d*)/gi,
+      
+      // Commodity price formats with units
+      /\$?([\d,]+\.?\d*)\s*(?:per\s+)?(?:barrel|bbl|\/barrel|\/bbl)/gi,
+      /(?:WTI|crude oil|oil)\s+(?:price|prices)\s+(?:at|of|around|near)\s*\$?([\d,]+\.?\d*)/gi,
+      
+      // Forecast and target patterns
+      /(?:target|targets|forecast|forecasts|project|projects|expect|expects|see|sees|estimate|estimates)\s+(?:WTI|crude oil|oil)?\s*(?:at\s+)?\$?([\d,]+\.?\d*)/gi,
       /(?:reach|reaching|hit|hitting|touch|touching)\s+\$?([\d,]+\.?\d*)/gi,
       /(?:around|near|about|approximately)\s+\$?([\d,]+\.?\d*)/gi,
       
-      // Short-term and quarterly forecasts
+      // Timeframe-specific patterns
       /(?:Q3|Q4|third quarter|fourth quarter|near term|short term)\s+(?:forecast|target|outlook|price)\s+(?:of\s+)?\$?([\d,]+\.?\d*)/gi,
-      /(?:three month|3-month|90 day|quarterly)\s+(?:forecast|target|outlook|price)\s+(?:of\s+)?\$?([\d,]+\.?\d*)/gi,
+      /(?:three month|3-month|90 day|quarterly|six month|6-month|twelve month|12-month|annual|yearly)\s+(?:forecast|target|outlook|price)\s+(?:of\s+)?\$?([\d,]+\.?\d*)/gi,
       
       // Currency pair formats
       /[A-Z]{3}\/[A-Z]{3}\s+(?:at|to|near|around)\s+([\d,]+\.?\d*)/gi,

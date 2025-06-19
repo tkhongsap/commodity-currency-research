@@ -26,7 +26,7 @@ function getForecastDisplay(forecast: number | { value: number | null; [key: str
   return 'N/A';
 }
 
-function getForecastSources(forecast: number | { value: number | null; sources?: Array<{name: string; confidence: string}>; [key: string]: any }): { display: string; sources: Array<{name: string; confidence: string}> } | null {
+function getForecastSources(forecast: number | { value: number | null; sources?: Array<{name: string; confidence: string; url?: string}>; [key: string]: any }): { display: string; sources: Array<{name: string; confidence: string; url?: string}> } | null {
   if (typeof forecast === 'number') {
     return null; // Old format has no sources
   }
@@ -128,20 +128,24 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     </div>
                     {(() => {
                       const sourceInfo = getForecastSources(insights.priceEstimates.threeMonths);
-                      if (sourceInfo) {
+                      if (sourceInfo && sourceInfo.sources.length > 0) {
+                        const source = sourceInfo.sources[0];
                         return (
                           <div className="mt-2 space-y-1">
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              {sourceInfo.display}
+                            <a 
+                              href={source.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
+                            >
+                              {source.name}
+                            </a>
+                            <div className="flex justify-center">
+                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                                <Shield className="w-3 h-3 mr-1" />
+                                {source.confidence || 'medium'} confidence
+                              </Badge>
                             </div>
-                            {sourceInfo.sources.length > 0 && (
-                              <div className="flex justify-center">
-                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
-                                  <Shield className="w-3 h-3 mr-1" />
-                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </Badge>
-                              </div>
-                            )}
                           </div>
                         );
                       }
@@ -157,20 +161,24 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     </div>
                     {(() => {
                       const sourceInfo = getForecastSources(insights.priceEstimates.sixMonths);
-                      if (sourceInfo) {
+                      if (sourceInfo && sourceInfo.sources.length > 0) {
+                        const source = sourceInfo.sources[0];
                         return (
                           <div className="mt-2 space-y-1">
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              {sourceInfo.display}
+                            <a 
+                              href={source.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
+                            >
+                              {source.name}
+                            </a>
+                            <div className="flex justify-center">
+                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                                <Shield className="w-3 h-3 mr-1" />
+                                {source.confidence || 'medium'} confidence
+                              </Badge>
                             </div>
-                            {sourceInfo.sources.length > 0 && (
-                              <div className="flex justify-center">
-                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
-                                  <Shield className="w-3 h-3 mr-1" />
-                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </Badge>
-                              </div>
-                            )}
                           </div>
                         );
                       }
@@ -186,20 +194,24 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     </div>
                     {(() => {
                       const sourceInfo = getForecastSources(insights.priceEstimates.twelveMonths);
-                      if (sourceInfo) {
+                      if (sourceInfo && sourceInfo.sources.length > 0) {
+                        const source = sourceInfo.sources[0];
                         return (
                           <div className="mt-2 space-y-1">
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              {sourceInfo.display}
+                            <a 
+                              href={source.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
+                            >
+                              {source.name}
+                            </a>
+                            <div className="flex justify-center">
+                              <Badge variant={getConfidenceVariant(source.confidence)} className="text-xs">
+                                <Shield className="w-3 h-3 mr-1" />
+                                {source.confidence || 'medium'} confidence
+                              </Badge>
                             </div>
-                            {sourceInfo.sources.length > 0 && (
-                              <div className="flex justify-center">
-                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
-                                  <Shield className="w-3 h-3 mr-1" />
-                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </Badge>
-                              </div>
-                            )}
                           </div>
                         );
                       }

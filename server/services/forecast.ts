@@ -341,25 +341,63 @@ export class ForecastService {
 
   private extractSources(content: string, expectedSources: string[]): ForecastSource[] {
     const sources: ForecastSource[] = [];
-    const confidence = this.determineConfidence(content, expectedSources);
+    const lowerContent = content.toLowerCase();
     
-    // Simple extraction - look for source names in content
-    expectedSources.forEach(sourceName => {
-      if (content.toLowerCase().includes(sourceName.toLowerCase())) {
-        sources.push({
-          name: sourceName,
-          url: `https://www.google.com/search?q=${encodeURIComponent(sourceName + ' forecast')}`, // Placeholder URL
-          confidence,
-          publishedDate: new Date().toISOString().split('T')[0] // Today's date as placeholder
-        });
-      }
-    });
+    // Enhanced institution mapping with priority levels and official URLs
+    const institutionMap = {
+      'goldman sachs': { name: 'Goldman Sachs', confidence: 'high' as const, priority: 1, url: 'https://www.goldmansachs.com/intelligence/pages/gs-research/' },
+      'jpmorgan': { name: 'JPMorgan', confidence: 'high' as const, priority: 1, url: 'https://www.jpmorgan.com/insights/research/outlook' },
+      'jp morgan': { name: 'JPMorgan', confidence: 'high' as const, priority: 1, url: 'https://www.jpmorgan.com/insights/research/outlook' },
+      'morgan stanley': { name: 'Morgan Stanley', confidence: 'high' as const, priority: 1, url: 'https://www.morganstanley.com/ideas/global-economic-outlook' },
+      'bank of america': { name: 'Bank of America', confidence: 'high' as const, priority: 1, url: 'https://business.bofa.com/en-us/content/global-research.html' },
+      'citibank': { name: 'Citibank', confidence: 'high' as const, priority: 1, url: 'https://www.citi.com/citi/research.html' },
+      'citigroup': { name: 'Citibank', confidence: 'high' as const, priority: 1, url: 'https://www.citi.com/citi/research.html' },
+      'wells fargo': { name: 'Wells Fargo', confidence: 'high' as const, priority: 1, url: 'https://www.wellsfargo.com/com/insights/' },
+      'deutsche bank': { name: 'Deutsche Bank', confidence: 'high' as const, priority: 1, url: 'https://www.db.com/newsroom_news/research-outlook.htm' },
+      'ubs': { name: 'UBS', confidence: 'high' as const, priority: 1, url: 'https://www.ubs.com/global/en/investment-bank/in-focus/' },
+      
+      'reuters': { name: 'Reuters', confidence: 'high' as const, priority: 2, url: 'https://www.reuters.com/markets/commodities/' },
+      'bloomberg': { name: 'Bloomberg', confidence: 'high' as const, priority: 2, url: 'https://www.bloomberg.com/energy' },
+      
+      'eia': { name: 'U.S. Energy Information Administration', confidence: 'high' as const, priority: 2, url: 'https://www.eia.gov/outlooks/steo/' },
+      'energy information administration': { name: 'U.S. Energy Information Administration', confidence: 'high' as const, priority: 2, url: 'https://www.eia.gov/outlooks/steo/' },
+      'iea': { name: 'International Energy Agency', confidence: 'high' as const, priority: 2, url: 'https://www.iea.org/reports/oil-market-report' },
+      'international energy agency': { name: 'International Energy Agency', confidence: 'high' as const, priority: 2, url: 'https://www.iea.org/reports/oil-market-report' },
+      'opec': { name: 'OPEC', confidence: 'high' as const, priority: 2, url: 'https://www.opec.org/opec_web/en/publications/338.htm' },
+      
+      'world bank': { name: 'World Bank', confidence: 'medium' as const, priority: 3, url: 'https://www.worldbank.org/en/publication/commodity-markets-outlook' },
+      'imf': { name: 'International Monetary Fund', confidence: 'medium' as const, priority: 3, url: 'https://www.imf.org/en/Publications/WEO' },
+      'international monetary fund': { name: 'International Monetary Fund', confidence: 'medium' as const, priority: 3, url: 'https://www.imf.org/en/Publications/WEO' },
+      'bank of thailand': { name: 'Bank of Thailand', confidence: 'medium' as const, priority: 3, url: 'https://www.bot.or.th/english/monetary-policy/mp-outlook.html' },
+      'federal reserve': { name: 'Federal Reserve', confidence: 'high' as const, priority: 2, url: 'https://www.federalreserve.gov/monetarypolicy/' },
+      'trading economics': { name: 'Trading Economics', confidence: 'medium' as const, priority: 4, url: 'https://tradingeconomics.com/forecast' }
+    };
 
-    // If no specific sources found, create a generic web search source
-    if (sources.length === 0) {
+    // Check for specific institutions mentioned in content and collect all matches
+    const foundSources: Array<{institution: any, priority: number}> = [];
+    
+    for (const [key, institution] of Object.entries(institutionMap)) {
+      if (lowerContent.includes(key)) {
+        foundSources.push({ institution, priority: institution.priority });
+      }
+    }
+
+    // Sort by priority (lower number = higher priority) and take the best source
+    foundSources.sort((a, b) => a.priority - b.priority);
+    
+    if (foundSources.length > 0) {
+      const bestSource = foundSources[0].institution;
       sources.push({
-        name: 'Web Search Results',
-        url: 'https://www.google.com/search?q=financial+forecast',
+        name: bestSource.name,
+        url: bestSource.url,
+        confidence: bestSource.confidence,
+        publishedDate: new Date().toISOString().split('T')[0]
+      });
+    } else {
+      // If no specific sources found, create a generic financial research source
+      sources.push({
+        name: 'Financial Research',
+        url: 'https://www.google.com/search?q=commodity+price+forecast+institutional+research',
         confidence: 'low'
       });
     }

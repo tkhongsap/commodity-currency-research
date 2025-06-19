@@ -124,6 +124,10 @@ Changelog:
 - June 18, 2025: Updated OpenAI model from gpt-4o to gpt-4o-mini per user request
 - June 19, 2025: Enhanced Serper news integration with AI-powered risk scoring and multi-region collection
 - June 19, 2025: Optimized commodity and currency search terms for better news relevance (e.g. "Steel (HRC)" → "steel prices")
+- June 19, 2025: Fixed accessibility warnings in dialog components with proper aria-describedby attributes
+- June 19, 2025: Enhanced price estimates display with source attribution and confidence badges
+- June 19, 2025: Implemented data validation to filter invalid forecast values, ensuring authentic data integrity
+- June 19, 2025: Added comprehensive methodology section explaining data sources and confidence levels
 ```
 
 ## User Preferences

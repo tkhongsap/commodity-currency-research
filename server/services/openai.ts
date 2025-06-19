@@ -183,12 +183,12 @@ export class OpenAIService {
 
       // Create timeout promise for AI ranking
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("AI ranking timeout")), 10000);
+        setTimeout(() => reject(new Error("AI ranking timeout")), 20000);
       });
 
-      // Using GPT-4.1-mini for cost-effective news ranking
+      // Using GPT-4o-mini for cost-effective news ranking
       const openaiPromise = this.openai.chat.completions.create({
-        model: "gpt-4.1-mini",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",

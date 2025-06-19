@@ -512,7 +512,18 @@ export class ForecastService {
           return value > 0 && value < 10000;
       }
     } else if (instrument.type === 'currency') {
-      return value > 0 && value < 100;
+      switch (symbol) {
+        case 'USDTHB=X': // USD to Thai Baht
+          return value >= 25 && value <= 45; // Realistic range for USD/THB
+        case 'USDMYR=X': // USD to Malaysian Ringgit  
+          return value >= 3.5 && value <= 5.5; // Realistic range for USD/MYR
+        case 'USDEUR=X': // USD to Euro
+          return value >= 0.80 && value <= 1.40; // Realistic range for USD/EUR
+        case 'USDGBP=X': // USD to British Pound
+          return value >= 0.6 && value <= 1.0; // Realistic range for USD/GBP
+        default:
+          return value > 0 && value < 100;
+      }
     }
     
     return value > 0;

@@ -132,6 +132,8 @@ Changelog:
 - June 19, 2025: Configured 4 separate web search calls per instrument to capture 3, 6, 12, and 24-month forecasts from major financial institutions
 - June 19, 2025: Enhanced source display with clickable institutional links for improved credibility and transparency
 - June 19, 2025: Implemented priority-based source selection to display the most credible institutions (Goldman Sachs, JPMorgan, etc.) with official website links
+- June 19, 2025: Fixed unrealistic currency forecasts by implementing specific validation ranges (THB: 25-45, MYR: 3.5-5.5, EUR: 0.8-1.4, GBP: 0.6-1.0)
+- June 19, 2025: Enhanced data integrity with symbol-specific validation to prevent impossible market predictions and ensure authentic forecast accuracy
 ```
 
 ## User Preferences

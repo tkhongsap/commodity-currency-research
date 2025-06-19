@@ -227,7 +227,7 @@ export class SerperService {
     
     const queryTerm = isInstrumentName ? `"${searchTerm}"` : searchTerm;
     
-    return `${queryTerm} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain OR trade war OR central bank OR Fed OR ECB OR surge OR crash OR volatile OR policy change OR recession OR inflation) (today OR this week OR recent OR global impact)`;
+    return `${queryTerm} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain)`;
   }
 
   async triageAndRankNews(
@@ -289,26 +289,8 @@ export class SerperService {
   private buildImpactQuery(instrumentName: string, queryType: 'primary' | 'policy' | 'market' | 'regional' = 'primary'): string {
     const quotedInstrument = `"${instrumentName}"`;
     
-    switch (queryType) {
-      case 'primary':
-        // High-impact comprehensive query
-        return `${quotedInstrument} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain OR trade war OR tariff OR surge OR crash OR volatile OR soars OR plunges OR spikes OR rallies) (Asia OR China OR US OR Europe OR global OR international) recent`;
-      
-      case 'policy':
-        // Policy and central bank focused
-        return `${quotedInstrument} (central bank OR Fed OR ECB OR BoJ OR BoE OR PBoC OR policy OR regulation OR interest rate OR monetary policy OR inflation OR recession OR economic data) (decision OR announcement OR change OR surprise)`;
-      
-      case 'market':
-        // Market movement and volatility focused
-        return `${quotedInstrument} (price surge OR price crash OR volatility OR market turmoil OR demand surge OR supply crunch OR shortage OR glut OR inventory OR stockpile OR production halt OR strike) (today OR this week OR breaking)`;
-      
-      case 'regional':
-        // Geopolitical and regional focus
-        return `${quotedInstrument} (geopolitical OR sanctions OR embargo OR conflict OR war OR tensions OR trade dispute OR OPEC OR cartel OR natural disaster OR weather OR climate) (Asia OR Southeast Asia OR China OR Thailand OR Malaysia OR Singapore OR global impact)`;
-      
-      default:
-        return `${quotedInstrument} (breaking OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain OR trade war OR surge OR crash OR volatile) (Asia OR China OR US OR Europe OR global) recent`;
-    }
+    // Use simplified keyword list for all query types
+    return `${quotedInstrument} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain)`;
   }
 
   async getInstrumentNews(instrumentName: string): Promise<NewsResponse> {

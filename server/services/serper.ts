@@ -225,7 +225,7 @@ export class SerperService {
       /^[A-Z]{2,6}[=\-\.]?[FX]?$/i.test(searchTerm.trim()) ||
       [
         "gold",
-        "silver", 
+        "silver",
         "oil",
         "copper",
         "aluminum",
@@ -235,15 +235,6 @@ export class SerperService {
         "corn",
         "bitcoin",
         "ethereum",
-        "steel",
-        "baht",
-        "ringgit",
-        "euro",
-        "pound",
-        "gbp",
-        "thb",
-        "myr",
-        "eur"
       ].some((commodity) => searchTerm.toLowerCase().includes(commodity));
 
     const queryTerm = isInstrumentName ? `"${searchTerm}"` : searchTerm;
@@ -319,7 +310,7 @@ export class SerperService {
 
   async getInstrumentNews(instrumentName: string): Promise<NewsResponse> {
     // Legacy method - keep basic query for backward compatibility
-    const searchQuery = `${instrumentName} commodity or currency market news Southeast Asia Thailand`;
+    const searchQuery = `${instrumentName} breaking OR urgent OR crisis`;
     return this.collectGlobalNews(searchQuery);
   }
 
@@ -396,7 +387,7 @@ export class SerperService {
       );
 
       // Final fallback to basic query using optimized search term
-      const basicQuery = `${optimizedSearchTerm} commodity currency market news Southeast Asia Thailand`;
+      const basicQuery = `${optimizedSearchTerm} breaking OR urgent OR crisis`;
       return this.triageAndRankNews(basicQuery, instrumentName);
     }
   }

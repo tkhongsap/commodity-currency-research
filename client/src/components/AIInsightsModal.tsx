@@ -136,9 +136,10 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                             </div>
                             {sourceInfo.sources.length > 0 && (
                               <div className="flex justify-center">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
+                                  <Shield className="w-3 h-3 mr-1" />
                                   {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </span>
+                                </Badge>
                               </div>
                             )}
                           </div>
@@ -164,9 +165,10 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                             </div>
                             {sourceInfo.sources.length > 0 && (
                               <div className="flex justify-center">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
+                                  <Shield className="w-3 h-3 mr-1" />
                                   {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </span>
+                                </Badge>
                               </div>
                             )}
                           </div>
@@ -192,9 +194,10 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                             </div>
                             {sourceInfo.sources.length > 0 && (
                               <div className="flex justify-center">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
+                                  <Shield className="w-3 h-3 mr-1" />
                                   {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </span>
+                                </Badge>
                               </div>
                             )}
                           </div>
@@ -220,9 +223,10 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                             </div>
                             {sourceInfo.sources.length > 0 && (
                               <div className="flex justify-center">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                <Badge variant={getConfidenceVariant(sourceInfo.sources[0].confidence)} className="text-xs">
+                                  <Shield className="w-3 h-3 mr-1" />
                                   {sourceInfo.sources[0].confidence || 'medium'} confidence
-                                </span>
+                                </Badge>
                               </div>
                             )}
                           </div>
@@ -272,6 +276,58 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   {insights.futureOutlook}
                 </p>
+              </section>
+
+              {/* Data Sources & Methodology Section */}
+              <section className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  Data Sources & Methodology
+                </h4>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                    <h5 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Price Estimates</h5>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                      Our price forecasts aggregate research from major financial institutions including Goldman Sachs, JPMorgan, Deutsche Bank, and UBS. 
+                      We also incorporate central bank guidance, commodity research from the IEA and World Bank, and consensus forecasts from trusted sources.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <h5 className="font-medium text-green-900 dark:text-green-200 mb-2">Confidence Levels</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="text-xs">
+                          <Shield className="w-3 h-3 mr-1" />
+                          High Confidence
+                        </Badge>
+                        <span className="text-green-700 dark:text-green-300">Goldman Sachs, JPMorgan, Central Banks, Bloomberg</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          <Shield className="w-3 h-3 mr-1" />
+                          Medium Confidence
+                        </Badge>
+                        <span className="text-green-700 dark:text-green-300">Deutsche Bank, UBS, World Bank, Trading Economics</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          <Shield className="w-3 h-3 mr-1" />
+                          Low Confidence
+                        </Badge>
+                        <span className="text-green-700 dark:text-green-300">General market analysis, web search results</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                    <h5 className="font-medium text-slate-900 dark:text-slate-200 mb-2">Disclaimer</h5>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Forecasts are based on institutional research and web search aggregation. Past performance does not guarantee future results. 
+                      This information is for research purposes only and should not be considered investment advice. Always consult with qualified financial professionals before making investment decisions.
+                    </p>
+                  </div>
+                </div>
               </section>
 
               {/* Forecast Disclaimer Section */}

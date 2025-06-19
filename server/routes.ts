@@ -44,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search news
+  // Search news (legacy route - basic search)
   app.post("/api/news/search", async (req, res) => {
     try {
       const { query } = SearchRequestSchema.parse(req.body);
@@ -59,7 +59,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get instrument-specific news
+  // Intelligent news search with AI ranking (15 second timeout)
+  app.post("/api/news/intelligent-search", async (req, res) => {
+    const startTime = Date.now();
+    const timeoutId = setTimeout(() => {
+      if (!res.headersSent) {
+        console.warn(`[NEWS-TRIAGE] Intelligent search timeout after 15s for query: ${req.body.query}`);
+        res.status(504).json({ 
+          error: "Request timeout",
+          message: "Intelligent news search took too long. Please try again."
+        });
+      }
+    }, 15000);
+
+    try {
+      const { query } = SearchRequestSchema.parse(req.body);
+      console.log(`[NEWS-TRIAGE] Starting intelligent search for query: "${query}"`);
+      
+      const rankedNews = await serperService.triageAndRankNews(query);
+      const duration = Date.now() - startTime;
+      
+      // Log performance metrics
+      console.log(`[NEWS-TRIAGE] Intelligent search completed in ${duration}ms`);
+      console.log(`[NEWS-TRIAGE] Query: "${query}", Articles: ${rankedNews.items.length}, Fallback: ${rankedNews.fallbackUsed}`);
+      
+      if (rankedNews.fallbackUsed) {
+        console.warn(`[NEWS-TRIAGE] Fallback mode used for query: "${query}"`);
+      }
+      
+      clearTimeout(timeoutId);
+      if (!res.headersSent) {
+        res.json(rankedNews);
+      }
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      clearTimeout(timeoutId);
+      console.error(`[NEWS-TRIAGE] Error in intelligent news search after ${duration}ms:`, error);
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: "Failed to perform intelligent news search",
+          message: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    }
+  });
+
+  // Get instrument-specific news (legacy route - basic search)
   app.get("/api/news/:instrument", async (req, res) => {
     try {
       const { instrument } = req.params;
@@ -71,6 +116,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to fetch news",
         message: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Get instrument-specific news with intelligent ranking (15 second timeout)
+  app.get("/api/news/intelligent/:instrument", async (req, res) => {
+    const startTime = Date.now();
+    const timeoutId = setTimeout(() => {
+      if (!res.headersSent) {
+        console.warn(`[NEWS-TRIAGE] Intelligent instrument news timeout after 15s for instrument: ${req.params.instrument}`);
+        res.status(504).json({ 
+          error: "Request timeout",
+          message: "Intelligent news analysis took too long. Please try again."
+        });
+      }
+    }, 15000);
+
+    try {
+      const { instrument } = req.params;
+      console.log(`[NEWS-TRIAGE] Starting intelligent news fetch for instrument: "${instrument}"`);
+      
+      const rankedNews = await serperService.getInstrumentNewsWithRanking(instrument);
+      const duration = Date.now() - startTime;
+      
+      // Log performance metrics
+      console.log(`[NEWS-TRIAGE] Intelligent instrument news completed in ${duration}ms`);
+      console.log(`[NEWS-TRIAGE] Instrument: "${instrument}", Articles: ${rankedNews.items.length}, Fallback: ${rankedNews.fallbackUsed}`);
+      
+      if (rankedNews.fallbackUsed) {
+        console.warn(`[NEWS-TRIAGE] Fallback mode used for instrument: "${instrument}"`);
+      }
+      
+      clearTimeout(timeoutId);
+      if (!res.headersSent) {
+        res.json(rankedNews);
+      }
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      clearTimeout(timeoutId);
+      console.error(`[NEWS-TRIAGE] Error fetching intelligent news for "${req.params.instrument}" after ${duration}ms:`, error);
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: "Failed to fetch intelligent news",
+          message: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
     }
   });
 

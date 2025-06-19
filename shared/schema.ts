@@ -38,6 +38,10 @@ export const NewsItemSchema = z.object({
   url: z.string(),
   publishedAt: z.string(),
   source: z.string(),
+  // New optional fields for intelligent news triage
+  region: z.string().optional(),
+  riskScore: z.number().min(1).max(10).optional(),
+  impactReason: z.string().optional(),
 });
 
 export const NewsResponseSchema = z.object({
@@ -45,8 +49,21 @@ export const NewsResponseSchema = z.object({
   query: z.string(),
 });
 
+// Enhanced news ranking response schema
+export const RankedNewsItemSchema = NewsItemSchema.extend({
+  riskScore: z.number().min(1).max(10),
+  impactReason: z.string(),
+});
+
+export const NewsRankingResponseSchema = z.object({
+  items: z.array(RankedNewsItemSchema),
+  fallbackUsed: z.boolean(),
+});
+
 export type NewsItem = z.infer<typeof NewsItemSchema>;
 export type NewsResponse = z.infer<typeof NewsResponseSchema>;
+export type RankedNewsItem = z.infer<typeof RankedNewsItemSchema>;
+export type NewsRankingResponse = z.infer<typeof NewsRankingResponseSchema>;
 
 // AI Insights schemas
 export const AIInsightsSchema = z.object({

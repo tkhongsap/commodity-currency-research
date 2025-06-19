@@ -39,7 +39,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content: params.query
           }
         ],
-        temperature: 0.1,
         max_tokens: 1500
       });
 

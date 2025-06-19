@@ -1,7 +1,8 @@
 import { AIInsights } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Brain } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, Brain, TrendingUp, Shield } from "lucide-react";
 
 interface AIInsightsModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ function getForecastDisplay(forecast: number | { value: number | null; [key: str
   return 'N/A';
 }
 
-function getForecastSources(forecast: number | { value: number | null; sources?: Array<{name: string; confidence: string}>; [key: string]: any }): string | null {
+function getForecastSources(forecast: number | { value: number | null; sources?: Array<{name: string; confidence: string}>; [key: string]: any }): { display: string; sources: Array<{name: string; confidence: string}> } | null {
   if (typeof forecast === 'number') {
     return null; // Old format has no sources
   }
@@ -35,23 +36,51 @@ function getForecastSources(forecast: number | { value: number | null; sources?:
     if (sources.length > 0) {
       const sourceNames = sources.slice(0, 2).map((s: any) => s.name).join(', ');
       const moreCount = sources.length > 2 ? ` +${sources.length - 2} more` : '';
-      return sourceNames + moreCount;
+      return {
+        display: sourceNames + moreCount,
+        sources: sources
+      };
     }
   }
   
   return null;
 }
 
+function getConfidenceColor(confidence: string): string {
+  switch (confidence?.toLowerCase()) {
+    case 'high': return 'text-green-600 dark:text-green-400';
+    case 'medium': return 'text-yellow-600 dark:text-yellow-400';
+    case 'low': return 'text-orange-600 dark:text-orange-400';
+    default: return 'text-slate-500 dark:text-slate-400';
+  }
+}
+
+function getConfidenceVariant(confidence: string): "default" | "secondary" | "destructive" | "outline" {
+  switch (confidence?.toLowerCase()) {
+    case 'high': return 'default';
+    case 'medium': return 'secondary';
+    case 'low': return 'outline';
+    default: return 'secondary';
+  }
+}
+
 export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, error }: AIInsightsModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden">
+      <DialogContent 
+        className="max-w-4xl max-h-[85vh] overflow-hidden"
+        aria-describedby="ai-insights-description"
+      >
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
             <Brain className="w-5 h-5 text-purple-600" />
             {title}
           </DialogTitle>
         </DialogHeader>
+        
+        <div id="ai-insights-description" className="sr-only">
+          AI-powered market analysis and price forecasts for commodities and currencies
+        </div>
         
         <div className="overflow-y-auto max-h-[75vh] space-y-8">
           {isLoading && (
@@ -97,11 +126,26 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
                       {getForecastDisplay(insights.priceEstimates.threeMonths)}
                     </div>
-                    {getForecastSources(insights.priceEstimates.threeMonths) && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {getForecastSources(insights.priceEstimates.threeMonths)}
-                      </div>
-                    )}
+                    {(() => {
+                      const sourceInfo = getForecastSources(insights.priceEstimates.threeMonths);
+                      if (sourceInfo) {
+                        return (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              {sourceInfo.display}
+                            </div>
+                            {sourceInfo.sources.length > 0 && (
+                              <div className="flex justify-center">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   
                   {/* 6 Months */}
@@ -110,11 +154,26 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
                       {getForecastDisplay(insights.priceEstimates.sixMonths)}
                     </div>
-                    {getForecastSources(insights.priceEstimates.sixMonths) && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {getForecastSources(insights.priceEstimates.sixMonths)}
-                      </div>
-                    )}
+                    {(() => {
+                      const sourceInfo = getForecastSources(insights.priceEstimates.sixMonths);
+                      if (sourceInfo) {
+                        return (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              {sourceInfo.display}
+                            </div>
+                            {sourceInfo.sources.length > 0 && (
+                              <div className="flex justify-center">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   
                   {/* 12 Months */}
@@ -123,11 +182,26 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
                       {getForecastDisplay(insights.priceEstimates.twelveMonths)}
                     </div>
-                    {getForecastSources(insights.priceEstimates.twelveMonths) && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {getForecastSources(insights.priceEstimates.twelveMonths)}
-                      </div>
-                    )}
+                    {(() => {
+                      const sourceInfo = getForecastSources(insights.priceEstimates.twelveMonths);
+                      if (sourceInfo) {
+                        return (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              {sourceInfo.display}
+                            </div>
+                            {sourceInfo.sources.length > 0 && (
+                              <div className="flex justify-center">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   
                   {/* 24 Months */}
@@ -136,11 +210,26 @@ export function AIInsightsModal({ isOpen, onClose, title, insights, isLoading, e
                     <div className="text-xl font-bold text-slate-800 dark:text-slate-200">
                       {getForecastDisplay(insights.priceEstimates.twentyFourMonths)}
                     </div>
-                    {getForecastSources(insights.priceEstimates.twentyFourMonths) && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {getForecastSources(insights.priceEstimates.twentyFourMonths)}
-                      </div>
-                    )}
+                    {(() => {
+                      const sourceInfo = getForecastSources(insights.priceEstimates.twentyFourMonths);
+                      if (sourceInfo) {
+                        return (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              {sourceInfo.display}
+                            </div>
+                            {sourceInfo.sources.length > 0 && (
+                              <div className="flex justify-center">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConfidenceBadge(sourceInfo.sources[0].confidence)}`}>
+                                  {sourceInfo.sources[0].confidence || 'medium'} confidence
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               </section>

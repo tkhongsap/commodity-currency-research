@@ -225,7 +225,7 @@ export class SerperService {
       /^[A-Z]{2,6}[=\-\.]?[FX]?$/i.test(searchTerm.trim()) ||
       [
         "gold",
-        "silver",
+        "silver", 
         "oil",
         "copper",
         "aluminum",
@@ -235,6 +235,15 @@ export class SerperService {
         "corn",
         "bitcoin",
         "ethereum",
+        "steel",
+        "baht",
+        "ringgit",
+        "euro",
+        "pound",
+        "gbp",
+        "thb",
+        "myr",
+        "eur"
       ].some((commodity) => searchTerm.toLowerCase().includes(commodity));
 
     const queryTerm = isInstrumentName ? `"${searchTerm}"` : searchTerm;
@@ -318,18 +327,18 @@ export class SerperService {
   private getOptimalSearchTerm(instrumentName: string): string {
     const searchTermMappings: Record<string, string> = {
       // Commodities - use simpler, more searchable terms
-      'Crude Oil (WTI)': 'crude oil',
-      'Steel (HRC)': 'steel prices',
-      'Sugar #11': 'sugar commodity',
-      'Aluminum': 'aluminum',
-      
+      "Crude Oil (WTI)": "crude oil",
+      "Steel (HRC)": "steel prices",
+      "Sugar #11": "sugar commodity",
+      Aluminum: "aluminum",
+
       // Currencies - use common market terms
-      'Thai Baht': 'Thai baht THB',
-      'Malaysian Ringgit': 'Malaysian ringgit MYR', 
-      'Euro': 'euro EUR',
-      'British Pound': 'British pound GBP'
+      "Thai Baht": "Thai baht THB",
+      "Malaysian Ringgit": "Malaysian ringgit MYR",
+      Euro: "euro EUR",
+      "British Pound": "British pound GBP",
     };
-    
+
     return searchTermMappings[instrumentName] || instrumentName;
   }
 

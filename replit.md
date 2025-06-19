@@ -130,6 +130,8 @@ Changelog:
 - June 19, 2025: Added comprehensive methodology section explaining data sources and confidence levels
 - June 19, 2025: Successfully implemented OpenAI web search API for real institutional price forecasts across all timeframes
 - June 19, 2025: Configured 4 separate web search calls per instrument to capture 3, 6, 12, and 24-month forecasts from major financial institutions
+- June 19, 2025: Enhanced source display with clickable institutional links for improved credibility and transparency
+- June 19, 2025: Implemented priority-based source selection to display the most credible institutions (Goldman Sachs, JPMorgan, etc.) with official website links
 ```
 
 ## User Preferences

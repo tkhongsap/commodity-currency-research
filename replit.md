@@ -128,6 +128,8 @@ Changelog:
 - June 19, 2025: Enhanced price estimates display with source attribution and confidence badges
 - June 19, 2025: Implemented data validation to filter invalid forecast values, ensuring authentic data integrity
 - June 19, 2025: Added comprehensive methodology section explaining data sources and confidence levels
+- June 19, 2025: Successfully implemented OpenAI web search API for real institutional price forecasts across all timeframes
+- June 19, 2025: Configured 4 separate web search calls per instrument to capture 3, 6, 12, and 24-month forecasts from major financial institutions
 ```
 
 ## User Preferences

@@ -37,7 +37,7 @@ The Intelligent News Triage System is an enhancement to the existing news functi
 
 2. **Time-Based Filtering:** The system must only collect news from the past week using the `tbs: "qdr:w"` parameter.
 
-3. **AI-Powered Ranking:** The system must use GPT-4o-mini to analyze and rank news articles by business risk impact on a scale of 1-10.
+3. **AI-Powered Ranking:** The system must use GPT-4.1-mini to analyze and rank news articles by business risk impact on a scale of 1-10.
 
 4. **Risk Categorization:** The AI must focus on these risk categories:
    - Geopolitical risks and conflicts
@@ -115,7 +115,7 @@ The Intelligent News Triage System is an enhancement to the existing news functi
 ### API Integration
 
 - **SERPER API:** Multiple concurrent requests to different regions
-- **OpenAI API:** GPT-4o-mini for cost-effective news ranking
+- **OpenAI API:** GPT-4.1-mini for cost-effective news ranking
 - **Rate Limiting:** Implement proper queuing and retry mechanisms
 - **Caching:** Consider caching AI rankings for identical news sets
 
@@ -188,7 +188,7 @@ The Intelligent News Triage System is an enhancement to the existing news functi
 
 ### Phase 1: Core Functionality
 - Multi-region news collection
-- Basic AI ranking with GPT-4o-mini
+- Basic AI ranking with GPT-4.1-mini
 - Enhanced NewsModal with risk scores
 
 ### Phase 2: Polish and Optimization

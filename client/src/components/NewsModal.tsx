@@ -16,7 +16,7 @@ interface NewsModalProps {
 
 // Type guard to check if news is ranked
 function isRankedNews(news: NewsResponse | NewsRankingResponse | null): news is NewsRankingResponse {
-  return news !== null && 'fallbackUsed' in news;
+  return news !== null && news !== undefined && typeof news === 'object' && 'fallbackUsed' in news;
 }
 
 // Type guard to check if item is ranked

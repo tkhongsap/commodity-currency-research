@@ -218,6 +218,18 @@ export class SerperService {
     }
   }
 
+  // Build general impact query for search terms
+  public buildGeneralImpactQuery(searchTerm: string): string {
+    // If it looks like an instrument/commodity name, use quoted search
+    const isInstrumentName = /^[A-Z]{2,6}[=\-\.]?[FX]?$/i.test(searchTerm.trim()) || 
+                             ['gold', 'silver', 'oil', 'copper', 'aluminum', 'sugar', 'coffee', 'wheat', 'corn', 'bitcoin', 'ethereum'].some(commodity => 
+                               searchTerm.toLowerCase().includes(commodity));
+    
+    const queryTerm = isInstrumentName ? `"${searchTerm}"` : searchTerm;
+    
+    return `${queryTerm} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain OR trade war OR central bank OR Fed OR ECB OR surge OR crash OR volatile OR policy change OR recession OR inflation) (today OR this week OR recent OR global impact)`;
+  }
+
   async triageAndRankNews(
     query: string,
     instrumentContext?: string,
@@ -273,7 +285,34 @@ export class SerperService {
     }
   }
 
+  // Build optimized search query for high-impact news
+  private buildImpactQuery(instrumentName: string, queryType: 'primary' | 'policy' | 'market' | 'regional' = 'primary'): string {
+    const quotedInstrument = `"${instrumentName}"`;
+    
+    switch (queryType) {
+      case 'primary':
+        // High-impact comprehensive query
+        return `${quotedInstrument} (breaking OR urgent OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain OR trade war OR tariff OR surge OR crash OR volatile OR soars OR plunges OR spikes OR rallies) (Asia OR China OR US OR Europe OR global OR international) recent`;
+      
+      case 'policy':
+        // Policy and central bank focused
+        return `${quotedInstrument} (central bank OR Fed OR ECB OR BoJ OR BoE OR PBoC OR policy OR regulation OR interest rate OR monetary policy OR inflation OR recession OR economic data) (decision OR announcement OR change OR surprise)`;
+      
+      case 'market':
+        // Market movement and volatility focused
+        return `${quotedInstrument} (price surge OR price crash OR volatility OR market turmoil OR demand surge OR supply crunch OR shortage OR glut OR inventory OR stockpile OR production halt OR strike) (today OR this week OR breaking)`;
+      
+      case 'regional':
+        // Geopolitical and regional focus
+        return `${quotedInstrument} (geopolitical OR sanctions OR embargo OR conflict OR war OR tensions OR trade dispute OR OPEC OR cartel OR natural disaster OR weather OR climate) (Asia OR Southeast Asia OR China OR Thailand OR Malaysia OR Singapore OR global impact)`;
+      
+      default:
+        return `${quotedInstrument} (breaking OR crisis OR disruption OR sanctions OR conflict OR shortage OR supply chain OR trade war OR surge OR crash OR volatile) (Asia OR China OR US OR Europe OR global) recent`;
+    }
+  }
+
   async getInstrumentNews(instrumentName: string): Promise<NewsResponse> {
+    // Legacy method - keep basic query for backward compatibility
     const searchQuery = `${instrumentName} commodity or currency market news Southeast Asia Thailand`;
     return this.collectGlobalNews(searchQuery);
   }
@@ -281,7 +320,47 @@ export class SerperService {
   async getInstrumentNewsWithRanking(
     instrumentName: string,
   ): Promise<NewsRankingResponse> {
-    const searchQuery = `${instrumentName} commodity currency market news Southeast Asia Thailand`;
-    return this.triageAndRankNews(searchQuery, instrumentName);
+    // Use optimized high-impact query for intelligent ranking
+    const primaryQuery = this.buildImpactQuery(instrumentName, 'primary');
+    
+    try {
+      console.log(`[NEWS-TRIAGE] Using optimized query for ${instrumentName}: "${primaryQuery}"`);
+      
+      // Try primary high-impact query first
+      const result = await this.triageAndRankNews(primaryQuery, instrumentName);
+      
+      // If we get fewer than 3 results, try fallback queries
+      if (result.items.length < 3) {
+        console.log(`[NEWS-TRIAGE] Primary query returned ${result.items.length} items, trying fallback queries`);
+        
+        const fallbackQueries = [
+          this.buildImpactQuery(instrumentName, 'policy'),
+          this.buildImpactQuery(instrumentName, 'market'),
+          this.buildImpactQuery(instrumentName, 'regional')
+        ];
+        
+        for (const fallbackQuery of fallbackQueries) {
+          try {
+            const fallbackResult = await this.triageAndRankNews(fallbackQuery, instrumentName);
+            if (fallbackResult.items.length >= 3) {
+              console.log(`[NEWS-TRIAGE] Fallback query successful with ${fallbackResult.items.length} items`);
+              return fallbackResult;
+            }
+          } catch (error) {
+            console.warn(`[NEWS-TRIAGE] Fallback query failed:`, error);
+            continue;
+          }
+        }
+      }
+      
+      return result;
+      
+    } catch (error) {
+      console.error(`[NEWS-TRIAGE] Optimized query failed, falling back to basic query:`, error);
+      
+      // Final fallback to basic query
+      const basicQuery = `${instrumentName} commodity currency market news Southeast Asia Thailand`;
+      return this.triageAndRankNews(basicQuery, instrumentName);
+    }
   }
 }

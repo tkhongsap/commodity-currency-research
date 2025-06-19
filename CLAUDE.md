@@ -70,9 +70,10 @@ The news system implements a sophisticated multi-region collection and AI-powere
 - **Error Resilience**: Individual region failures don't break entire collection
 - **Time Filtering**: Past week news only (`tbs: "qdr:w"`)
 - **Deduplication**: Advanced similarity detection for titles and sources
+- **Optimized Queries**: Multi-tier query system for better impact detection
 
 #### AI-Powered Ranking
-- **Model**: GPT-4o-mini for cost-effective analysis
+- **Model**: GPT-4.1-mini for cost-effective analysis
 - **Risk Categories**: Geopolitical, supply chain, policy changes, market volatility, natural disasters, central bank decisions, trade wars, commodity supply changes
 - **Scoring**: 1-10 risk impact scale with reasoning
 - **Output**: Top 5 articles ranked by business impact
@@ -82,11 +83,19 @@ The news system implements a sophisticated multi-region collection and AI-powere
 ### Data Flow & Architecture Patterns
 
 #### News Processing Pipeline
-1. **Collection**: Multi-region parallel news gathering (SerperService)
-2. **Deduplication**: Title/source similarity filtering
-3. **AI Analysis**: GPT-4o-mini ranking by business impact (OpenAIService)
-4. **Response**: Top 5 articles with risk scores and reasoning
-5. **Fallback**: Chronological sorting on AI failure
+1. **Query Optimization**: Multi-tier impact-focused query building
+2. **Collection**: Multi-region parallel news gathering (SerperService)
+3. **Deduplication**: Title/source similarity filtering
+4. **AI Analysis**: GPT-4.1-mini ranking by business impact (OpenAIService)
+5. **Response**: Top 5 articles with risk scores and reasoning
+6. **Fallback**: Multiple query strategies and chronological sorting
+
+#### Query Optimization System
+- **Primary Query**: High-impact terms (crisis, disruption, sanctions, conflict, surge, crash)
+- **Policy Query**: Central bank decisions, regulatory changes, monetary policy
+- **Market Query**: Price movements, volatility, supply/demand shocks
+- **Regional Query**: Geopolitical events, trade disputes, regional impacts
+- **Fallback Strategy**: Progressive query relaxation for better coverage
 
 #### Type Safety & Validation
 - **Shared Schemas**: Zod validation in `/shared/schema.ts`
@@ -103,7 +112,7 @@ The news system implements a sophisticated multi-region collection and AI-powere
 
 - **YahooFinanceService**: Real-time price data for commodities (CL=F, ALI=F, HRC=F, SB=F) and currencies (THB=X, MYR=X, EURUSD=X, GBPUSD=X)
 - **SerperService**: Multi-region news collection with AI triage integration and deduplication
-- **OpenAIService**: Market analysis (GPT-4.1-mini) and news ranking (GPT-4o-mini)
+- **OpenAIService**: Market analysis (GPT-4.1-mini) and news ranking (GPT-4.1-mini)
 
 ### Environment Variables Required
 ```

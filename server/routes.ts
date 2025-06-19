@@ -76,7 +76,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { query } = SearchRequestSchema.parse(req.body);
       console.log(`[NEWS-TRIAGE] Starting intelligent search for query: "${query}"`);
       
-      const rankedNews = await serperService.triageAndRankNews(query);
+      // Use enhanced query building for better impact detection
+      const optimizedQuery = serperService.buildGeneralImpactQuery ? 
+        serperService.buildGeneralImpactQuery(query) : query;
+      
+      console.log(`[NEWS-TRIAGE] Optimized query: "${optimizedQuery}"`);
+      const rankedNews = await serperService.triageAndRankNews(optimizedQuery);
       const duration = Date.now() - startTime;
       
       // Log performance metrics

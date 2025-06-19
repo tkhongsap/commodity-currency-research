@@ -2,7 +2,7 @@
 
 - `server/services/serper.ts` - Enhanced SERPER service with multi-region collection and AI triage integration
 - `server/services/serper.test.ts` - Unit tests for enhanced SERPER service
-- `server/services/openai.ts` - Enhanced OpenAI service with news ranking functionality using GPT-4o-mini
+- `server/services/openai.ts` - Enhanced OpenAI service with news ranking functionality using GPT-4.1-mini
 - `server/services/openai.test.ts` - Unit tests for OpenAI news ranking methods with mocked responses
 - `server/routes.ts` - Updated API routes with new intelligent endpoints and 15-second timeouts
 - `shared/schema.ts` - Enhanced news schemas with risk scoring, region fields, and ranking response types
@@ -28,7 +28,7 @@
   - [x] 1.8 Write unit tests for all new SERPER service methods
 
 - [x] 2.0 Implement AI-Powered News Ranking with OpenAI Integration
-  - [x] 2.1 Add `rankNewsByImpact()` method to OpenAI service using GPT-4o-mini
+  - [x] 2.1 Add `rankNewsByImpact()` method to OpenAI service using GPT-4.1-mini
   - [x] 2.2 Create AI prompt template focusing on risk categories (geopolitical, supply chain, policy changes, etc.)
   - [x] 2.3 Implement news scoring logic (1-10 scale) with impact reasoning generation
   - [x] 2.4 Add `triageAndRankNews()` method to SERPER service that calls OpenAI ranking

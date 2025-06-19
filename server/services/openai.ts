@@ -143,8 +143,12 @@ export class OpenAIService {
         console.error(`[NEWS-TRIAGE] OpenAI connection test failed:`, testError);
         throw new Error(`OpenAI connection failed: ${testError instanceof Error ? testError.message : 'Unknown error'}`);
       }
-      // Prepare news items for AI analysis
-      const newsForAnalysis = newsItems.map((item, index) => ({
+      // Prepare news items for AI analysis - limit to 8 most recent articles for faster processing
+      const recentNewsItems = newsItems
+        .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+        .slice(0, 8);
+        
+      const newsForAnalysis = recentNewsItems.map((item, index) => ({
         id: index,
         title: item.title,
         description: item.description,
@@ -152,53 +156,24 @@ export class OpenAIService {
         publishedAt: item.publishedAt,
       }));
 
-      const prompt = `
-        Analyze the following news articles and rank them by their potential business risk impact on commodities and currencies, particularly focusing on Southeast Asian markets${instrumentContext ? ` related to ${instrumentContext}` : ""}.
+      const prompt = `Rank these ${newsForAnalysis.length} news articles by market impact on ${instrumentContext || "commodities"} (1-10 scale):
 
-        News Articles:
-        ${JSON.stringify(newsForAnalysis, null, 2)}
+${newsForAnalysis.map((article, index) => `${index}: "${article.title}" - ${article.description.slice(0, 80)}...`).join('\n')}
 
-        SCORING GUIDELINES - Use these criteria for consistent 1-10 scoring:
-        
-        Score 8-10 (CRITICAL): Market-halting events, major geopolitical crises, central bank emergency actions, supply chain collapse, natural disasters affecting major trade routes, sanctions on key commodities/currencies
-        
-        Score 6-7 (HIGH): Policy changes affecting trade, significant supply disruptions, regional conflicts, major economic data releases, corporate earnings affecting commodity sectors, interest rate decisions
-        
-        Score 4-5 (MEDIUM): Routine policy announcements, moderate supply/demand shifts, corporate news, regional economic updates, trade negotiations progress
-        
-        Score 1-3 (LOW): General economic commentary, minor corporate updates, routine market analysis, historical perspectives
+Risk levels: Supply disruption (6-9), Geopolitics (5-8), Policy (4-7), Economics (3-6), Sentiment (2-5).
 
-        Risk Categories to Evaluate:
-        1. Geopolitical risks and conflicts 
-        2. Supply chain disruptions
-        3. Economic policy changes
-        4. Market volatility events  
-        5. Natural disasters affecting trade
-        6. Central bank decisions
-        7. Trade war developments
-        8. Commodity supply/production changes
+JSON response:
+{
+  "rankings": [
+    {"id": number, "riskScore": number, "impactReason": "brief reason"}
+  ]
+}
 
-        Respond with JSON in this exact format:
-        {
-          "rankings": [
-            {
-              "id": number,
-              "riskScore": number (1-10),
-              "impactReason": "Concise explanation citing specific risk category and market impact potential"
-            }
-          ]
-        }
+Include ALL articles. Prioritize Southeast Asia relevance.`;
 
-        IMPORTANT: 
-        - Score conservatively but don't underestimate breaking news or policy changes
-        - Include ALL articles (not just 4+) - the enhanced system will handle filtering
-        - Be specific about which risk category applies
-        - Consider regional relevance to Southeast Asia
-      `;
-
-      // Create timeout promise for AI ranking
+      // Create timeout promise for AI ranking - increased to 30 seconds for better reliability
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("AI ranking timeout")), 20000);
+        setTimeout(() => reject(new Error("AI ranking timeout")), 30000);
       });
 
       // Using GPT-4.1-mini for cost-effective news ranking
@@ -220,7 +195,7 @@ export class OpenAIService {
         max_tokens: 1200,
       });
 
-      console.log(`[NEWS-TRIAGE] Sending ${newsItems.length} articles to OpenAI for ranking...`);
+      console.log(`[NEWS-TRIAGE] Sending ${newsForAnalysis.length} articles to OpenAI for ranking...`);
       const response = await Promise.race([openaiPromise, timeoutPromise]);
       console.log(`[NEWS-TRIAGE] OpenAI response received successfully`);
       const result = JSON.parse(response.choices[0].message.content || "{}");
@@ -231,7 +206,7 @@ export class OpenAIService {
 
       if (result.rankings && Array.isArray(result.rankings)) {
         for (const ranking of result.rankings) {
-          const originalItem = newsItems[ranking.id];
+          const originalItem = recentNewsItems[ranking.id];
           if (originalItem) {
             const baseAiScore = Math.min(Math.max(ranking.riskScore, 1), 10);
             

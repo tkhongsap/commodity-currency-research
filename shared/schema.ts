@@ -65,22 +65,40 @@ export type NewsResponse = z.infer<typeof NewsResponseSchema>;
 export type RankedNewsItem = z.infer<typeof RankedNewsItemSchema>;
 export type NewsRankingResponse = z.infer<typeof NewsRankingResponseSchema>;
 
-// AI Insights schemas
+// Forecast transparency schemas
+export const ForecastSourceSchema = z.object({
+  name: z.string(),
+  url: z.string(),
+  confidence: z.enum(['high', 'medium', 'low']),
+  publishedDate: z.string().optional(),
+});
+
+export const ForecastDataSchema = z.object({
+  value: z.number().nullable(),
+  sources: z.array(ForecastSourceSchema),
+  methodology: z.string(),
+  lastUpdated: z.string(),
+});
+
+// Enhanced AI Insights schemas with transparency
 export const AIInsightsSchema = z.object({
   symbol: z.string(),
   marketOverview: z.string(),
   priceEstimates: z.object({
-    threeMonths: z.number(),
-    sixMonths: z.number(),
-    twelveMonths: z.number(),
-    twentyFourMonths: z.number(),
+    threeMonths: z.union([z.number(), ForecastDataSchema]), // Backward compatible
+    sixMonths: z.union([z.number(), ForecastDataSchema]),
+    twelveMonths: z.union([z.number(), ForecastDataSchema]),
+    twentyFourMonths: z.union([z.number(), ForecastDataSchema]),
   }),
   macroAnalysis: z.string(),
   regionalImpact: z.string(),
   thailandImpact: z.string(),
   futureOutlook: z.string(),
+  forecastDisclaimer: z.string().optional(), // New field for transparency
 });
 
+export type ForecastSource = z.infer<typeof ForecastSourceSchema>;
+export type ForecastData = z.infer<typeof ForecastDataSchema>;
 export type AIInsights = z.infer<typeof AIInsightsSchema>;
 
 // Search request schema

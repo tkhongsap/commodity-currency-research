@@ -124,6 +124,18 @@ Changelog:
 - June 18, 2025: Updated OpenAI model from gpt-4o to gpt-4o-mini per user request
 - June 19, 2025: Enhanced Serper news integration with AI-powered risk scoring and multi-region collection
 - June 19, 2025: Optimized commodity and currency search terms for better news relevance (e.g. "Steel (HRC)" → "steel prices")
+- June 19, 2025: Fixed accessibility warnings in dialog components with proper aria-describedby attributes
+- June 19, 2025: Enhanced price estimates display with source attribution and confidence badges
+- June 19, 2025: Implemented data validation to filter invalid forecast values, ensuring authentic data integrity
+- June 19, 2025: Added comprehensive methodology section explaining data sources and confidence levels
+- June 19, 2025: Successfully implemented OpenAI web search API for real institutional price forecasts across all timeframes
+- June 19, 2025: Configured 4 separate web search calls per instrument to capture 3, 6, 12, and 24-month forecasts from major financial institutions
+- June 19, 2025: Enhanced source display with clickable institutional links for improved credibility and transparency
+- June 19, 2025: Implemented priority-based source selection to display the most credible institutions (Goldman Sachs, JPMorgan, etc.) with official website links
+- June 19, 2025: Fixed unrealistic currency forecasts by implementing specific validation ranges (THB: 25-45, MYR: 3.5-5.5, EUR: 0.8-1.4, GBP: 0.6-1.0)
+- June 19, 2025: Enhanced data integrity with symbol-specific validation to prevent impossible market predictions and ensure authentic forecast accuracy
+- June 19, 2025: Simplified forecast display design by removing individual institution names and showing compact confidence badges only
+- June 19, 2025: Streamlined UI to reduce space usage while maintaining confidence level information for user clarity
 ```
 
 ## User Preferences

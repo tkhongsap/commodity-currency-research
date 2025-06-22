@@ -1,14 +1,159 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import OpenAI from "openai";
 import { YahooFinanceService } from "./services/yahoo-finance";
 import { SerperService } from "./services/serper";
 import { OpenAIService } from "./services/openai";
 import { SearchRequestSchema } from "@shared/schema";
 
+// Production setup using OpenAI's web search capabilities
+// No mock data or external WebSearch dependencies required
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const yahooFinanceService = new YahooFinanceService();
   const serperService = new SerperService();
-  const openaiService = new OpenAIService();
+  
+  // Create OpenAI WebSearch wrapper for production use
+  const webSearchWrapper = async (params: { query: string; prompt: string }): Promise<string> => {
+    console.log(`[FORECAST-WEB-SEARCH] Executing web search with query: "${params.query}"`);
+    console.log(`[FORECAST-WEB-SEARCH] Search context: "${params.prompt}"`);
+    
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "";
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY is required for web search functionality");
+    }
+
+    const openai = new OpenAI({ apiKey });
+    
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-search-preview",
+        web_search_options: {},
+        messages: [
+          {
+            role: "system",
+            content: `You are a financial market research assistant. ${params.prompt}. Focus on finding specific numerical price forecasts, analyst targets, and institutional research. Always include source names and publication dates when available.`
+          },
+          {
+            role: "user",
+            content: params.query
+          }
+        ],
+        max_tokens: 1500
+      });
+
+      const result = completion.choices[0].message.content || "";
+      console.log(`[FORECAST-WEB-SEARCH] Search completed, result length: ${result.length}`);
+      console.log(`[FORECAST-WEB-SEARCH] Result preview: ${result.slice(0, 200)}...`);
+      
+      return result;
+    } catch (error) {
+      console.error('[FORECAST-WEB-SEARCH] OpenAI web search error:', error);
+      throw new Error(`Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  
+  const openaiService = new OpenAIService(webSearchWrapper);
+
+  // Admin endpoint to clear forecast cache
+  app.post("/api/admin/clear-cache", (req, res) => {
+    try {
+      openaiService.clearForecastCache();
+      res.json({ success: true, message: "Forecast cache cleared" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to clear cache" });
+    }
+  });
+
+  // Admin debug endpoint to test forecast functionality
+  app.get("/api/admin/debug-forecast/:symbol", async (req, res) => {
+    const { symbol } = req.params;
+    console.log(`[FORECAST-DEBUG] Admin debug request for symbol: ${symbol}`);
+    
+    try {
+      // Test OpenAI web search wrapper directly
+      const testQuery = `"Crude Oil WTI" price forecast 2025 "3 months" Goldman Sachs`;
+      console.log(`[FORECAST-DEBUG] Testing OpenAI web search with query: ${testQuery}`);
+      
+      const webSearchResult = await webSearchWrapper({
+        query: testQuery,
+        prompt: "Extract numerical price forecasts for 3M timeframe."
+      });
+      
+      console.log(`[FORECAST-DEBUG] OpenAI web search test result: ${webSearchResult}`);
+      
+      // Get forecast stats
+      const forecastService = (openaiService as any).forecastService;
+      const cacheStats = forecastService ? forecastService.getCacheStats() : { size: 0, keys: [] };
+      
+      res.json({
+        success: true,
+        debug: {
+          symbol,
+          openaiWebSearchAvailable: true,
+          webSearchTest: {
+            query: testQuery,
+            result: webSearchResult,
+            resultLength: webSearchResult?.length || 0
+          },
+          cacheStats,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+    } catch (error) {
+      console.error(`[FORECAST-DEBUG] Debug endpoint error:`, error);
+      res.status(500).json({ 
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        debug: {
+          symbol,
+          openaiWebSearchAvailable: true,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+  });
+
+  // Admin endpoint to test forecast extraction for a specific symbol
+  app.get("/api/admin/test-forecast/:symbol", async (req, res) => {
+    const { symbol } = req.params;
+    console.log(`[FORECAST-DEBUG] Testing forecast extraction for: ${symbol}`);
+    
+    try {
+      // Clear cache first to get fresh results
+      openaiService.clearForecastCache();
+      
+      // Get current price for context
+      const priceData = await yahooFinanceService.getPrice(symbol);
+      
+      // Generate insights which will trigger forecast collection
+      const insights = await openaiService.generateInsights(
+        symbol,
+        priceData?.name || symbol,
+        priceData?.price || 100
+      );
+      
+      res.json({
+        success: true,
+        symbol,
+        currentPrice: priceData?.price || 100,
+        forecasts: insights.priceEstimates,
+        disclaimer: insights.forecastDisclaimer,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error(`[FORECAST-DEBUG] Test forecast error:`, error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        symbol,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 
   // Get all price data
   app.get("/api/prices", async (req, res) => {
@@ -184,15 +329,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Price data retrieved for ${symbol}: ${priceData.price}`);
       
-      // Set a response timeout of 25 seconds
+      // Set a response timeout of 40 seconds to accommodate forecast collection
       const timeoutId = setTimeout(() => {
         if (!res.headersSent) {
           res.status(504).json({ 
             error: "Request timeout",
-            message: "AI insights generation took too long. Please try again."
+            message: "AI insights with forecast generation took too long. Please try again."
           });
         }
-      }, 25000);
+      }, 40000);
       
       const insights = await openaiService.generateInsights(
         symbol,

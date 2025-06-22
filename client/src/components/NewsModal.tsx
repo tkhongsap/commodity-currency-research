@@ -68,7 +68,10 @@ export function NewsModal({ isOpen, onClose, title, news, isLoading, error }: Ne
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+      <DialogContent 
+        className="max-w-2xl max-h-[80vh] overflow-hidden"
+        aria-describedby="news-modal-description"
+      >
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
             {modalTitle}
@@ -79,6 +82,10 @@ export function NewsModal({ isOpen, onClose, title, news, isLoading, error }: Ne
             )}
           </DialogTitle>
         </DialogHeader>
+        
+        <div id="news-modal-description" className="sr-only">
+          News articles and market impact analysis for commodities and currencies
+        </div>
         
         <div className="overflow-y-auto max-h-[60vh] space-y-6">
           {isLoading && (
